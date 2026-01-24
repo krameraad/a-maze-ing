@@ -1,3 +1,5 @@
+import maze_algorithms as algorithms  # noqa
+from collections.abc import Callable
 from enum import Enum
 
 Vector = tuple[int, int]
@@ -104,21 +106,7 @@ class Maze:
         self.__output = output
         self.__perfect = perfect
 
-    def tunnel(self, start: Cell, end: Cell) -> Cell:
-        """
-        Open walls to connect the cells `start` and `end`.
-        If the cells aren't next to eachother, raises `MazeError`.
-
-        Args:
-            start (Cell): Start of the tunnel.
-            end (Cell): Destination of the tunnel.
-
-        Returns:
-            Cell: The cell that the newly made tunnel ends in.
-        """
-        pass
-
-    def generate(self) -> None:
+    def generate(self, algorithm: Callable[[list], None]) -> None:
         """Generate the layout of the maze."""
         cells = []
         for y in range(self.__size[0]):
@@ -130,9 +118,9 @@ class Maze:
                     case self.__exit:
                         row.append(Maze.Cell(Maze.Cell.CType.EXIT))
                     case _:
-                        row.append(Maze.Cell(walls=0))
+                        row.append(Maze.Cell())
             cells.append(row)
-        self.cells = cells
+        self.__cells = cells
 
     def __str__(self):
         result = ""
@@ -145,13 +133,7 @@ class Maze:
 
 if __name__ == "__main__":
     maze = Maze((20, 20), (3, 3), (17, 17))
-    maze.generate()
+    maze.generate(algorithms.binary_tree)
     print(maze)
 
     print(repr(Maze.Cell(Maze.Cell.CType.ENTRY, 0b0011)))
-
-    # print(maze.test_cell)
-    # print(repr(maze.test_cell))
-    # print("╭─┬─╮ <>┬─╮ \n"
-    #       "├─┼─┤ ├─██┤ \n"
-    #       "╰─┴─╯ ╰─┴─[]\n")
