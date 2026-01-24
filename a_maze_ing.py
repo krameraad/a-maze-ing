@@ -78,15 +78,17 @@ class Maze:
         def __str__(self):
             match self.__ctype:
                 case self.CType.ENTRY:
-                    return "\033[96m[>\033[0m"  # Cyan
+                    return "\033[96m<>\033[0m"  # Cyan
                 case self.CType.EXIT:
-                    return "\033[95m[<\033[0m"  # Magenta
+                    return "\033[95m[]\033[0m"  # Magenta
                 case self.CType.PATTERN:
                     return "\033[91m██\033[0m"  # Red
             return self.__glyphs[self.__walls]
 
         def __repr__(self):
-            return f"Cell(ctype={self.__ctype}, walls={self.__walls:04b})"
+            return "Maze.Cell(" \
+                   f"ctype=Maze.Cell.{self.__ctype}, " \
+                   f"walls=0b{self.__walls:04b})"
 
     def __init__(
             self,
@@ -145,6 +147,8 @@ if __name__ == "__main__":
     maze = Maze((20, 20), (3, 3), (17, 17))
     maze.generate()
     print(maze)
+
+    print(repr(Maze.Cell(Maze.Cell.CType.ENTRY, 0b0011)))
 
     # print(maze.test_cell)
     # print(repr(maze.test_cell))
