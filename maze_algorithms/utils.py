@@ -1,6 +1,4 @@
-# from ..a_maze_ing import Maze
-
-# def tunnel(self, start: Cell, end: Cell) -> Cell:
+# def tunnel(self, start: Maze.Cell, end: Maze.Cell) -> None:
 #     """
 #     Open walls to connect the cells `start` and `end`.
 #     If the cells aren't next to eachother, raises `MazeError`.
@@ -12,4 +10,5 @@
 #     Returns:
 #         Cell: The cell that the newly made tunnel ends in.
 #     """
-#     pass
+#     start.__walls = 0b0011
+#     end.__walls = 0b1100

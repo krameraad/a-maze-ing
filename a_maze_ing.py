@@ -77,6 +77,12 @@ class Maze:
             self.__ctype = ctype
             self.__walls = walls
 
+        def set_ctype(self, ctype: CType) -> None:
+            if ctype in self.CType:
+                self.__ctype = ctype
+            else:
+                raise Maze.MazeError("tried to set invalid ctype")
+
         def __str__(self):
             match self.__ctype:
                 case self.CType.ENTRY:
@@ -108,19 +114,18 @@ class Maze:
 
     def generate(self, algorithm: Callable[[list], None]) -> None:
         """Generate the layout of the maze."""
-        cells = []
+        self.cells: list[list[Maze.Cell]] = []
         for y in range(self.__size[0]):
             row = []
             for x in range(self.__size[1]):
-                match (x, y):
-                    case self.__entry:
-                        row.append(Maze.Cell(Maze.Cell.CType.ENTRY))
-                    case self.__exit:
-                        row.append(Maze.Cell(Maze.Cell.CType.EXIT))
-                    case _:
-                        row.append(Maze.Cell())
-            cells.append(row)
-        self.__cells = cells
+                row.append(Maze.Cell())
+            self.cells.append(row)
+        x, y = self.__entry
+        self.cells[x][y].set_ctype(Maze.Cell.CType.ENTRY)
+        x, y = self.__exit
+        self.cells[x][y].set_ctype(Maze.Cell.CType.EXIT)
+        if algorithm:
+            algorithm(self.cells)
 
     def __str__(self):
         result = ""
