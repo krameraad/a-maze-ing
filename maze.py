@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from enum import Enum
 
-from .utils import MazeError
+from utils import MazeError
 
 Vector = tuple[int, int]
 
@@ -93,11 +93,11 @@ class Maze:
 
     def __init__(
             self,
-            size: Vector,
-            entry: Vector,
-            exit: Vector,
+            size=(20, 15),
+            entry=(0, 0),
+            exit=(19, 14),
             output="maze.txt",
-            perfect=False
+            perfect=True
             ):
         self.__size = size
         self.__entry = entry
