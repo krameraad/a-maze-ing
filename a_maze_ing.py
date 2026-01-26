@@ -131,11 +131,25 @@ class Maze:
         if algorithm:
             algorithm(self.cells)
 
-    def __str__(self) -> str:
+    def to_hex(self) -> str:
         result = ""
         for row in self.cells:
             for cell in row:
                 result += hex(int(cell)).removeprefix("0x").upper()
+            result += "\n"
+        with open(self.__output, "w") as f:
+            f.write(result + "\n")
+            s = str(self.__entry[0]) + "," + str(self.__entry[1])
+            f.write(s + "\n")
+            s = str(self.__exit[0]) + "," + str(self.__exit[1])
+            f.write(s + "\n")
+        return result
+
+    def __str__(self) -> str:
+        result = ""
+        for row in self.cells:
+            for cell in row:
+                result += str(cell)
             result += "\n"
         return result
 
@@ -144,5 +158,7 @@ if __name__ == "__main__":
     maze = Maze((5, 5), (3, 3), (4, 4))
     maze.generate(algorithms.binary_tree)
     print(maze)
+    maze.to_hex()
+    # print(maze.cells[0][0].__walls)
 
     print(repr(Maze.Cell(Maze.Cell.CType.ENTRY, 0b0011)))
