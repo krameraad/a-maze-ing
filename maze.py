@@ -1,6 +1,8 @@
 from collections.abc import Callable
 from enum import Enum
 
+from .utils import MazeError
+
 Vector = tuple[int, int]
 
 
@@ -21,17 +23,6 @@ class Maze:
         output (str): Name of the output file.
         perfect (bool): Whether the maze should be perfect or not.
     """
-    class Dir(Enum):
-        """Enum of directions (N, E, S, W)."""
-        N = 0b0001
-        E = 0b0010
-        S = 0b0100
-        W = 0b1000
-
-    class MazeError(Exception):
-        """Captures exceptions specific to mazes."""
-        pass
-
     class Cell:
         """
         Single cell as part of a maze.
@@ -80,9 +71,12 @@ class Maze:
             if ctype in self.CType:
                 self.__ctype = ctype
             else:
-                raise Maze.MazeError("tried to set invalid ctype")
+                raise MazeError("tried to set invalid ctype")
 
-        def __str__(self):
+        def __int__(self) -> int:
+            return self.__walls
+
+        def __str__(self) -> str:
             match self.__ctype:
                 case self.CType.ENTRY:
                     return "\033[96m<>\033[0m"  # Cyan
@@ -90,9 +84,9 @@ class Maze:
                     return "\033[95m[]\033[0m"  # Magenta
                 case self.CType.PATTERN:
                     return "\033[91m██\033[0m"  # Red
-            return self.__glyphs[self.__walls]
+            return "\033[97m" + self.__glyphs[self.__walls] + "\033[0m"
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return "Maze.Cell(" \
                    f"ctype=Maze.Cell.{self.__ctype}, " \
                    f"walls=0b{self.__walls:04b})"
@@ -117,7 +111,7 @@ class Maze:
         for y in range(self.__size[0]):
             row = []
             for x in range(self.__size[1]):
-                row.append(Maze.Cell())
+                row.append(Maze.Cell(walls=0b1111))
             self.cells.append(row)
         x, y = self.__entry
         self.cells[x][y].set_ctype(Maze.Cell.CType.ENTRY)
@@ -126,7 +120,20 @@ class Maze:
         if algorithm:
             algorithm(self.cells)
 
-    def __str__(self):
+    def create_output(self):
+        result = ""
+        for row in self.cells:
+            for cell in row:
+                result += hex(int(cell)).removeprefix("0x").upper()
+            result += "\n"
+        with open(self.__output, "w") as f:
+            f.write(result + "\n")
+            s = str(self.__entry[0]) + "," + str(self.__entry[1])
+            f.write(s + "\n")
+            s = str(self.__exit[0]) + "," + str(self.__exit[1])
+            f.write(s + "\n")
+
+    def __str__(self) -> str:
         result = ""
         for row in self.cells:
             for cell in row:
