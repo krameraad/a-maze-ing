@@ -108,15 +108,15 @@ class Maze:
 
     def generate(self, algorithm: Callable[[list], None]) -> None:
         """Generate the layout of the maze."""
-        for y in range(self.__size[0]):
+        for y in range(self.__size[1]):
             row = []
-            for x in range(self.__size[1]):
+            for x in range(self.__size[0]):
                 row.append(Maze.Cell(walls=0b1111))
             self.cells.append(row)
         x, y = self.__entry
-        self.cells[x][y].set_ctype(Maze.Cell.CType.ENTRY)
+        self.cells[y][x].set_ctype(Maze.Cell.CType.ENTRY)
         x, y = self.__exit
-        self.cells[x][y].set_ctype(Maze.Cell.CType.EXIT)
+        self.cells[y][x].set_ctype(Maze.Cell.CType.EXIT)
         if algorithm:
             algorithm(self.cells)
 
