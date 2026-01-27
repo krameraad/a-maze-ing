@@ -6,13 +6,26 @@ ConfigInfo = tuple[tuple[int, int],
 
 
 def find_value(lines: list[str], query: str) -> tuple[str, int]:
+    """Return a config key and index of the first character of its value."""
     for line in lines:
         if query in line:
             return (line, line.index("=") + 1)
     raise KeyError(f"no config entry for {query}")
 
 
-def get_config(file: str) -> ConfigInfo:
+def get_config(filename="config.txt") -> ConfigInfo:
+    """
+    Parse the key value pairs from a config file,
+    check if they're correct, and return the info as a tuple.
+
+    Can raise *KeyError* or *ValueError*.
+
+    Args:
+        filename (str): Name of the file to open.
+
+    Returns:
+        ConfigInfo: Tuple of all the collected information.
+    """
     width = 20
     height = 20
     entry = (3, 3)
@@ -20,7 +33,7 @@ def get_config(file: str) -> ConfigInfo:
     output = "maze.txt"
     perfect = False
 
-    with open(file) as f:
+    with open(filename) as f:
         buf = f.read().splitlines()
 
         line, index = find_value(buf, "WIDTH")

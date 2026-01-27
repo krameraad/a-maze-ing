@@ -104,10 +104,10 @@ class Maze:
         self.__exit = exit
         self.__output = output
         self.__perfect = perfect
+        self.cells: list[list[Maze.Cell]] = []
 
     def generate(self, algorithm: Callable[[list], None]) -> None:
         """Generate the layout of the maze."""
-        self.cells: list[list[Maze.Cell]] = []
         for y in range(self.__size[0]):
             row = []
             for x in range(self.__size[1]):
@@ -121,6 +121,7 @@ class Maze:
             algorithm(self.cells)
 
     def create_output(self):
+        """Create an output file containing the maze and other info."""
         result = ""
         for row in self.cells:
             for cell in row:
@@ -128,9 +129,9 @@ class Maze:
             result += "\n"
         with open(self.__output, "w") as f:
             f.write(result + "\n")
-            s = str(self.__entry[0]) + "," + str(self.__entry[1])
+            s = ",".join([str(n) for n in self.__entry])
             f.write(s + "\n")
-            s = str(self.__exit[0]) + "," + str(self.__exit[1])
+            s = ",".join([str(n) for n in self.__exit])
             f.write(s + "\n")
 
     def __str__(self) -> str:
@@ -140,3 +141,11 @@ class Maze:
                 result += str(cell)
             result += "\n"
         return result
+
+    def __repr__(self) -> str:
+        return "Maze(" \
+                f"size={self.__size}, " \
+                f"entry={self.__entry}, " \
+                f"exit={self.__exit}, " \
+                f"output=\"{self.__output}\", " \
+                f"perfect={self.__perfect})"
