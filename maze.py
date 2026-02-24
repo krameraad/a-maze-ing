@@ -1,151 +1,176 @@
-from collections.abc import Callable
-from enum import Enum
-
-from utils import MazeError
-
-Vector = tuple[int, int]
+import random
+from typing import List, Tuple
+from cell import Cell
+from config import Config
 
 
 class Maze:
-    """
-    Represents a maze with an entry and exit point inside of it.
-    The maze can optionally be perfect, having only
-    a single route to the exit.
+    """Maze structure and generation logic."""
 
-    When initialized, the maze does not have a layout yet.
-    Use `.generate()` to create the layout or to
-    regenerate a layout before displaying the maze.
+    def __init__(self, config: Config) -> None:
+        self.width = config.width
+        self.height = config.height
+        self.entry = config.entry
+        self.exit = config.exit
 
-    Args:
-        size (Vector): Width and height of the maze.
-        entry (Vector): Position of the maze's entry point.
-        exit (Vector): Position of the maze's exit point.
-        output (str): Name of the output file.
-        perfect (bool): Whether the maze should be perfect or not.
-    """
-    class Cell:
-        """
-        Single cell as part of a maze.
+        # Create grid with all walls closed
+        self.grid = []
 
-        Args:
-            ctype (CType): Represents the type of this cell.
-            walls (int): Four-bit flags representing \
-                which walls of the cell are open.
-        """
-        class CType(Enum):
-            DEFAULT = 0
-            ENTRY = 1
-            EXIT = 2
-            PATTERN = 3
+        for row in range(self.height):
+            current_row = []
+            for col in range(self.width):
+                new_cell = Cell(True, True, True, True)
+                current_row.append(new_cell)
+            self.grid.append(current_row)
 
-        __glyphs = {
-            # Key : Glyph  : Wall positions
-            0b0000: '┼─',   # none
+    # --------------------------------------------------
 
-            0b0001: '┬─',   # north
-            0b0010: '┤ ',   # east
-            0b0100: '┴─',   # south
-            0b1000: '├─',   # west
+    def generate_perfect(self) -> None:
+        """Generate perfect maze."""
+        self._generate_perfect()
 
-            0b0101: '──',   # north + south
-            0b1010: '│ ',   # east + west
+    # def generate_non_perfect_maze(self) -> None:
+    #     """Generate NON perfect maze"""
+    #     self._generate_non_perfect_maze()
 
-            0b0011: '╮ ',   # north + east
-            0b0110: '╯ ',   # east + south
-            0b1100: '╰─',   # south + west
-            0b1001: '╭─',   # west + north
+    # --------------------------------------------------
 
-            0b0111: '╴ ',   # north + east + south
-            0b1110: '╵ ',   # east + south + west
-            0b1101: '╶─',   # south + west + north
-            0b1011: '╷ ',   # west + north + east
+    def _neighbors(self, x: int, y: int) -> List[Tuple[int, int]]:
+        """Return valid neighbor coordinates."""
+        neighbors = []
 
-            0b1111: '░░',   # all
-        }
+        directions = [
+            (x, y - 1),  # North
+            (x + 1, y),  # East
+            (x, y + 1),  # South
+            (x - 1, y),  # West
+        ]
 
-        def __init__(self, ctype=CType.DEFAULT, walls=0b1111):
-            self.__ctype = ctype
-            self.__walls = walls
+        for nx, ny in directions:
+            if 0 <= nx < self.width and 0 <= ny < self.height:
+                neighbors.append((nx, ny))
 
-        def set_ctype(self, ctype: CType) -> None:
-            if ctype in self.CType:
-                self.__ctype = ctype
+        return neighbors
+
+    # --------------------------------------------------
+
+    def _carve_passage(
+        self,
+        current: Tuple[int, int],
+        neighbor: Tuple[int, int],
+    ) -> None:
+        """Remove walls between two adjacent cells."""
+
+        x1, y1 = current
+        x2, y2 = neighbor
+
+        cell1 = self.grid[y1][x1]
+        cell2 = self.grid[y2][x2]
+
+        if x2 == x1 and y2 == y1 - 1:  # North
+            cell1.open_wall("N")
+            cell2.open_wall("S")
+
+        elif x2 == x1 + 1 and y2 == y1:  # East
+            cell1.open_wall("E")
+            cell2.open_wall("W")
+
+        elif x2 == x1 and y2 == y1 + 1:  # South
+            cell1.open_wall("S")
+            cell2.open_wall("N")
+
+        elif x2 == x1 - 1 and y2 == y1:  # West
+            cell1.open_wall("W")
+            cell2.open_wall("E")
+
+    # --------------------------------------------------
+
+    def _generate_perfect(self) -> None:
+        """Generate perfect maze using DFS backtracking."""
+
+        visited = set()
+        stack = []
+
+        start = (0, 0)
+        stack.append(start)
+        visited.add(start)
+
+        while stack:
+            current = stack[-1]
+            x, y = current
+
+            # Get unvisited neighbors
+            
+            unvisited = []
+            for nx, ny in self._neighbors(x, y):
+                if (nx, ny) not in visited:
+                    unvisited.append((nx, ny))
+            # unvisited = [
+            #     (nx, ny)
+            #     for nx, ny in self._neighbors(x, y)
+            #     if (nx, ny) not in visited
+            # ]
+
+            if unvisited:
+                neighbor = random.choice(unvisited)
+
+                self._carve_passage(current, neighbor)
+
+                visited.add(neighbor)
+                stack.append(neighbor)
             else:
-                raise MazeError("tried to set invalid ctype")
+                stack.pop()
+                
+                
+    def _generate_non_perfect_maze(self) -> None:
+        ...
 
-        def __int__(self) -> int:
-            return self.__walls
+    # --------------------------------------------------
 
-        def __str__(self) -> str:
-            match self.__ctype:
-                case self.CType.ENTRY:
-                    return "\033[96m<>\033[0m"  # Cyan
-                case self.CType.EXIT:
-                    return "\033[95m[]\033[0m"  # Magenta
-                case self.CType.PATTERN:
-                    return "\033[91m██\033[0m"  # Red
-            return "\033[97m" + self.__glyphs[self.__walls] + "\033[0m"
+    def shortest_path(self) -> List[str]:
+        """Return shortest path from entry to exit using NSEW."""
 
-        def __repr__(self) -> str:
-            return "Maze.Cell(" \
-                   f"ctype=Maze.Cell.{self.__ctype}, " \
-                   f"walls=0b{self.__walls:04b})"
+        from collections import deque
 
-    def __init__(
-            self,
-            size=(20, 15),
-            entry=(0, 0),
-            exit=(19, 14),
-            output="maze.txt",
-            perfect=True
-            ):
-        self.__size = size
-        self.__entry = entry
-        self.__exit = exit
-        self.__output = output
-        self.__perfect = perfect
-        self.cells: list[list[Maze.Cell]] = []
+        queue = deque()
+        queue.append(self.entry)
 
-    def generate(self, algorithm: Callable[[list], None]) -> None:
-        """Generate the layout of the maze."""
-        for y in range(self.__size[1]):
-            row = []
-            for x in range(self.__size[0]):
-                row.append(Maze.Cell(walls=0b1111))
-            self.cells.append(row)
-        x, y = self.__entry
-        self.cells[y][x].set_ctype(Maze.Cell.CType.ENTRY)
-        x, y = self.__exit
-        self.cells[y][x].set_ctype(Maze.Cell.CType.EXIT)
-        if algorithm:
-            algorithm(self.cells)
+        came_from = {self.entry: None}
 
-    def create_output(self):
-        """Create an output file containing the maze and other info."""
-        result = ""
-        for row in self.cells:
-            for cell in row:
-                result += hex(int(cell)).removeprefix("0x").upper()
-            result += "\n"
-        with open(self.__output, "w") as f:
-            f.write(result + "\n")
-            s = ",".join([str(n) for n in self.__entry])
-            f.write(s + "\n")
-            s = ",".join([str(n) for n in self.__exit])
-            f.write(s + "\n")
+        while queue:
+            current = queue.popleft()
 
-    def __str__(self) -> str:
-        result = ""
-        for row in self.cells:
-            for cell in row:
-                result += str(cell)
-            result += "\n"
-        return result
+            if current == self.exit:
+                break
 
-    def __repr__(self) -> str:
-        return "Maze(" \
-                f"size={self.__size}, " \
-                f"entry={self.__entry}, " \
-                f"exit={self.__exit}, " \
-                f"output=\"{self.__output}\", " \
-                f"perfect={self.__perfect})"
+            x, y = current
+            cell = self.grid[y][x]
+
+            directions = {
+                "N": (x, y - 1),
+                "E": (x + 1, y),
+                "S": (x, y + 1),
+                "W": (x - 1, y),
+            }
+
+            for direction, (nx, ny) in directions.items():
+                if 0 <= nx < self.width and 0 <= ny < self.height:
+                    if not cell.has_wall(direction):
+                        if (nx, ny) not in came_from:
+                            queue.append((nx, ny))
+                            came_from[(nx, ny)] = (current, direction)
+
+        # Reconstruct path
+        if self.exit not in came_from:
+            return []
+
+        path = []
+        current = self.exit
+
+        while came_from[current] is not None:
+            previous, direction = came_from[current]
+            path.append(direction)
+            current = previous
+
+        path.reverse()
+        return path

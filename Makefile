@@ -1,17 +1,15 @@
-NAME = a_maze_ing.py
-CONFIG = config.txt
-
-# Commands --------------------------------------------------------------------
-
 install:
+	pip install -r requirements.txt
 
 run:
-	python3 $(NAME) $(CONFIG)
+	python3 a_maze_ing.py config.txt
 
 debug:
+	python3 -m pdb a_maze_ing.py default_config.txt
 
 clean:
-	rm -rf __pycache__ .mypy_cache
+	find . -type d -name "__pycache__" -exec rm -rf {} +
+	rm -rf .mypy_cache
 
 lint:
 	flake8 .
@@ -20,7 +18,3 @@ lint:
 lint-strict:
 	flake8 .
 	mypy . --strict
-
-# Phonies ---------------------------------------------------------------------
-
-.PHONY: install run debug clean lint lint-strict
