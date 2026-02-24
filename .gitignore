@@ -2,5 +2,6 @@
 __pycache__
 .mypy_cache
 maze.txt
-mlx-2.2-py3-none-any.whl
+*.whl
 todo.txt
+mlx

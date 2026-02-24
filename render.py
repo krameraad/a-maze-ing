@@ -1,7 +1,6 @@
-import sys
 import os
+import random
 from typing import Any
-
 from mlx import Mlx
 
 from maze import Maze
@@ -57,6 +56,8 @@ def render(maze: Maze, path: list[str]) -> None:
     # Hooks -------------------------------------------------------------------
     def mymouse(button, x, y, params):
         print(f"Got mouse event! button {button} at {x},{y}.")
+        if y > 127:
+            mlx.mlx_loop_exit(mlx_ptr)
 
     def mykey(keynum, params):
         if keynum == 65307:
@@ -67,13 +68,25 @@ def render(maze: Maze, path: list[str]) -> None:
 
     # Creating a window -------------------------------------------------------
     win_1 = mlx.mlx_new_window(mlx_ptr, w, h, "A-Maze-ing")
+    win_2 = mlx.mlx_new_window(mlx_ptr, 256, 256, "Controls")
     mlx.mlx_clear_window(mlx_ptr, win_1)
 
     # Loading images ----------------------------------------------------------
     for x in os.listdir(dir_assets):
         imgs[x.removesuffix(".png")] = load_image(mlx, mlx_ptr, dir_assets + x)
 
-    # Render the maze cells
+    # Render background -------------------------------------------------------
+    color = random.choice(["color_red", "color_green", "color_blue"])
+    for y in range(maze.height):
+        for x in range(maze.width):
+            mlx.mlx_put_image_to_window(mlx_ptr,
+                                        win_1,
+                                        imgs[color].img,
+                                        x * tilesize,
+                                        y * tilesize)
+    mlx.mlx_do_sync(mlx_ptr)
+
+    # Render the maze cells ---------------------------------------------------
     for y, row in enumerate(maze.grid):
         for x, cell in enumerate(row):
             walls = int(cell.to_hex(), 16)
@@ -83,7 +96,7 @@ def render(maze: Maze, path: list[str]) -> None:
                                         x * tilesize,
                                         y * tilesize)
 
-    # Render path
+    # Render path -------------------------------------------------------------
     x, y = maze.entry
     for char in path:
         match char:
@@ -105,16 +118,21 @@ def render(maze: Maze, path: list[str]) -> None:
                                     x * tilesize,
                                     y * tilesize)
 
-    # Render entry and exit
+    # Render entry and exit ---------------------------------------------------
     x, y = maze.entry[0] * tilesize, maze.entry[1] * tilesize
     mlx.mlx_put_image_to_window(mlx_ptr, win_1, imgs["tile_entry"].img, x, y)
     x, y = maze.exit[0] * tilesize, maze.exit[1] * tilesize
     mlx.mlx_put_image_to_window(mlx_ptr, win_1, imgs["tile_exit"].img, x, y)
 
+    # Render second window buttons --------------------------------------------
+    mlx.mlx_put_image_to_window(mlx_ptr, win_2,
+                                imgs["button_regenerate"].img, 0, 0)
+    mlx.mlx_put_image_to_window(mlx_ptr, win_2,
+                                imgs["button_exit"].img, 0, 128)
+
     # Setting up hooks --------------------------------------------------------
-    mlx.mlx_mouse_hook(win_1, mymouse, None)
+    mlx.mlx_mouse_hook(win_2, mymouse, None)
     mlx.mlx_key_hook(win_1, mykey, None)
     mlx.mlx_hook(win_1, 33, 0, gere_close, None)
 
     mlx.mlx_loop(mlx_ptr)
-    

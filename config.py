@@ -114,7 +114,8 @@ def parse_config(file_path: Path) -> Config:
 
                 data[key] = value
     except ConfigError as error:
-        raise ConfigError(f"Error reading configuration file: {error}") from error
+        raise ConfigError(f"Error reading configuration file: {error}") \
+            from error
 
     # Validate required keys
     required_keys = {
@@ -151,7 +152,8 @@ def parse_config(file_path: Path) -> Config:
     seed: Optional[int] = None
     if "SEED" in data:
         seed = parse_int(data["SEED"], "SEED")
-        random.seed(seed)
+        if seed != 0:
+            random.seed(seed)
 
     return Config(
         width=width,

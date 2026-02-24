@@ -5,7 +5,7 @@ from maze import Maze
 from solver import MazeSolver
 from writer import write_maze
 from exceptions import MazeError
-from display import display_ascii
+# from display import display_ascii
 from render import render
 
 
@@ -30,7 +30,8 @@ def main() -> None:
     # -------------------------------
     print("Welcome To OUR Maze Generator! 🚪")
     try:
-        user = int(input("press 1 to see the magic 👽👽👽👽:"))
+        # user = int(input("press 1 to see the magic 👽👽👽👽:"))
+        user = 1
         print()
         if user == 1:
             try:
@@ -40,7 +41,6 @@ def main() -> None:
                 sys.exit(1)
     except ValueError:
         print("You can only enter '1'! STUPID 👿👿👿")
-    
 
     # -------------------------------
     # 3️⃣ Generate maze
@@ -83,9 +83,9 @@ def main() -> None:
     #     print(f"Path length: {len(path)}")
     # except MazeError as me:
     #     print(f"Error {me}")
+
     render(maze, path)
 
 
 if __name__ == "__main__":
     main()
- 
