@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from config import parse_config, Config
+from config import parse_config
 from maze import Maze
 from solver import MazeSolver
 from writer import write_maze

@@ -128,7 +128,7 @@ class Maze:
             x, y = current
 
             # Get unvisited neighbors
-            
+
             unvisited = []
             for nx, ny in self._neighbors(x, y):
                 if (nx, ny) not in visited:

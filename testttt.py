@@ -18,7 +18,7 @@
 #         self.visited = visited
 #         self.graph = graph
 #         self.node = node
-        
+
 #         visited.append(node)
 #         queu.append(node)
 #         while queu:
