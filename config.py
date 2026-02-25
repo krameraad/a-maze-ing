@@ -152,8 +152,7 @@ def parse_config(file_path: Path) -> Config:
     seed: Optional[int] = None
     if "SEED" in data:
         seed = parse_int(data["SEED"], "SEED")
-        if seed != 0:
-            random.seed(seed)
+        random.seed(seed)
 
     return Config(
         width=width,
