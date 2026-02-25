@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from config import parse_config
+from config import parse_config, Config
 from maze import Maze
 from solver import MazeSolver
 from writer import write_maze
@@ -30,15 +30,10 @@ def main() -> None:
     # -------------------------------
     print("Welcome To OUR Maze Generator! 🚪")
     try:
-        # user = int(input("press 1 to see the magic 👽👽👽👽:"))
-        user = 1
-        print()
-        if user == 1:
-            try:
-                config = parse_config(config_file)
-            except Exception as e:
-                print(f"Error parsing config: {e}")
-                sys.exit(1)
+        config = parse_config(config_file)
+    except Exception as e:
+        print(f"Error parsing config: {e}")
+        sys.exit(1)
     except ValueError:
         print("You can only enter '1'! STUPID 👿👿👿")
 
@@ -47,7 +42,10 @@ def main() -> None:
     # -------------------------------
     try:
         maze = Maze(config)
-        maze.generate_perfect()
+        if config.perfect:
+            maze.generate_perfect()
+        else:
+            maze.generate_non_perfect_maze()
     except MazeError as me:
         print(f"Maze generation error: {me}")
         sys.exit(1)

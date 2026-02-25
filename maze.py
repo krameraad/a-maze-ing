@@ -29,9 +29,10 @@ class Maze:
         """Generate perfect maze."""
         self._generate_perfect()
 
-    # def generate_non_perfect_maze(self) -> None:
-    #     """Generate NON perfect maze"""
-    #     self._generate_non_perfect_maze()
+    def generate_non_perfect_maze(self) -> None:
+        """Generate NON perfect maze"""
+        self._generate_perfect()
+        self._add_loops(loop_factor=0.15)
 
     # --------------------------------------------------
 
@@ -85,6 +86,33 @@ class Maze:
 
     # --------------------------------------------------
 
+    def _wall_exists(
+        self,
+        current: Tuple[int, int],
+        neighbor: Tuple[int, int],
+    ) -> bool:
+
+        x1, y1 = current
+        x2, y2 = neighbor
+
+        cell = self.grid[y1][x1]
+
+        if x2 == x1 and y2 == y1 - 1:
+            return cell.has_wall("N")
+
+        elif x2 == x1 + 1 and y2 == y1:
+            return cell.has_wall("E")
+
+        elif x2 == x1 and y2 == y1 + 1:
+            return cell.has_wall("S")
+
+        elif x2 == x1 - 1 and y2 == y1:
+            return cell.has_wall("W")
+
+        return False
+
+    # ----------------------------------------------------
+
     def _generate_perfect(self) -> None:
         """Generate perfect maze using DFS backtracking."""
 
@@ -120,12 +148,27 @@ class Maze:
                 stack.append(neighbor)
             else:
                 stack.pop()
-                
-                
-    def _generate_non_perfect_maze(self) -> None:
-        ...
+    # ------------------------------------------------------
 
-    # --------------------------------------------------
+    def _add_loops(self, loop_factor=0.15):
+        walls = []
+
+        for y in range(self.height):
+            for x in range(self.width):
+                for nx, ny in self._neighbors(x, y):
+                    # Only consider East and South to avoid duplicates
+                    if nx > x or ny > y:
+                        if self._wall_exists((x, y), (nx, ny)):
+                            walls.append(((x, y), (nx, ny)))
+
+        random.shuffle(walls)
+
+        loops_to_add = int(len(walls) * loop_factor)
+
+        for i in range(loops_to_add):
+            self._carve_passage(*walls[i])
+
+    # ------------------------------------------------------
 
     def shortest_path(self) -> List[str]:
         """Return shortest path from entry to exit using NSEW."""
