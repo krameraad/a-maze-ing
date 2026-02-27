@@ -8,7 +8,7 @@ class ConfigError(MazeError):
 
 
 class MazeGenerationError(MazeError):
-    def __init__(self, message="Not able to find the file"):
+    def __init__(self, message="Problem generation the maze with that size"):
         super().__init__(message)
 
 

@@ -2,6 +2,7 @@ import random
 from typing import List, Tuple
 from cell import Cell
 from config import Config
+from exceptions import MazeGenerationError
 
 
 class Maze:
@@ -28,11 +29,13 @@ class Maze:
     def generate_perfect(self) -> None:
         """Generate perfect maze."""
         self._generate_perfect()
+        self._apply_logo()
 
     def generate_non_perfect_maze(self) -> None:
         """Generate NON perfect maze"""
         self._generate_perfect()
-        self._add_loops(loop_factor=0.15)
+        self._add_loops(loop_factor=0.10)
+        self._apply_logo()
 
     # --------------------------------------------------
 
@@ -116,6 +119,7 @@ class Maze:
     def _generate_perfect(self) -> None:
         """Generate perfect maze using DFS backtracking."""
 
+        logo = self._logo_cells()
         visited = set()
         stack = []
 
@@ -131,7 +135,7 @@ class Maze:
 
             unvisited = []
             for nx, ny in self._neighbors(x, y):
-                if (nx, ny) not in visited:
+                if (nx, ny) not in visited and (nx, ny) not in logo:
                     unvisited.append((nx, ny))
             # unvisited = [
             #     (nx, ny)
@@ -150,7 +154,7 @@ class Maze:
                 stack.pop()
     # ------------------------------------------------------
 
-    def _add_loops(self, loop_factor=0.15):
+    def _add_loops(self, loop_factor=0.10):
         walls = []
 
         for y in range(self.height):
@@ -217,3 +221,92 @@ class Maze:
 
         path.reverse()
         return path
+
+    # ------------------------------------------------------
+    # 42 LOGO
+    def _logo_cells(self) -> set:
+        """Return cells that form the '42' logo in the center of the maze."""
+        cx = self.width // 2
+        cy = self.height // 2
+
+        # Pixel art pattern for "42" (relative offsets from center-left)
+        # Each tuple is (col_offset, row_offset) from anchor point
+        four = [
+            (0, 0), (0, 1), (0, 2),          # left vertical
+                    (1, 2), (2, 2),    # horizontal bar
+                    (2, 0), (2, 1), (2, 2), (2, 3), (2, 4),  # right vertical
+        ]
+        two = [
+            (4, 0), (5, 0), (6, 0),          # top bar
+                            (6, 1),          # top-right
+            (4, 2), (5, 2), (6, 2),          # middle bar
+            (4, 3),                      # bottom-left
+            (4, 4), (5, 4), (6, 4),          # bottom bar
+        ]
+
+        anchor_col = cx - 3  # shift left to center the whole "42"
+        anchor_row = cy - 2  # shift up to center vertically
+
+        cells = set()
+        for dc, dr in four + two:
+            col = anchor_col + dc
+            row = anchor_row + dr
+            if 0 <= col < self.width and 0 <= row < self.height:
+                cells.add((col, row))
+
+        return cells
+
+    def _apply_logo(self) -> None:
+        """Re-wall all logo cells to form '42' in the center."""
+
+        MIN_WIDTH = 12
+        MIN_HEIGHT = 7
+
+        if self.width < MIN_WIDTH or self.height < MIN_HEIGHT:
+            raise MazeGenerationError(
+                f"Maze too small for '42' logo"
+                f"(minimum {MIN_WIDTH}x{MIN_HEIGHT}, "
+                f"got {self.width}x{self.height})."
+            )
+
+        logo = self._logo_cells()
+
+        # Check BEFORE discarding
+        if self.entry in logo:
+            raise MazeGenerationError(
+                f"Entry point {self.entry} "
+                f"conflicts with the '42' logo position."
+            )
+        if self.exit in logo:
+            raise MazeGenerationError(
+                f"Exit point {self.exit} "
+                f"conflicts with the '42' logo position."
+            )
+
+        # Now safe to proceed
+        protected = set()
+        protected.add(self.entry)
+        protected.add(self.exit)
+        for pos in [self.entry, self.exit]:
+            x, y = pos
+            for nx, ny in self._neighbors(x, y):
+                protected.add((nx, ny))
+
+        logo -= protected
+
+        for (x, y) in logo:
+            cell = self.grid[y][x]
+            cell.close_wall("N")
+            cell.close_wall("E")
+            cell.close_wall("S")
+            cell.close_wall("W")
+
+            for direction, (nx, ny), opposite in [
+                ("N", (x, y-1), "S"),
+                ("E", (x+1, y), "W"),
+                ("S", (x, y+1), "N"),
+                ("W", (x-1, y), "E"),
+            ]:
+                if 0 <= nx < self.width and 0 <= ny < self.height:
+                    if (nx, ny) not in logo:
+                        self.grid[ny][nx].close_wall(opposite)

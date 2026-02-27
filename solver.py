@@ -49,6 +49,9 @@ class MazeSolver:
         # Reconstruct path
         path: List[str] = []
         current = end
+        if end not in came_from:
+            print("⚠️  No path found — exit is unreachable.")
+            return []
 
         while came_from[current] is not None:
             previous, direction = came_from[current]
