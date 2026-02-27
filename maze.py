@@ -137,11 +137,6 @@ class Maze:
             for nx, ny in self._neighbors(x, y):
                 if (nx, ny) not in visited and (nx, ny) not in logo:
                     unvisited.append((nx, ny))
-            # unvisited = [
-            #     (nx, ny)
-            #     for nx, ny in self._neighbors(x, y)
-            #     if (nx, ny) not in visited
-            # ]
 
             if unvisited:
                 neighbor = random.choice(unvisited)
