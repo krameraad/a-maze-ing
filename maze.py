@@ -34,7 +34,7 @@ class Maze:
     def generate_non_perfect_maze(self) -> None:
         """Generate NON perfect maze"""
         self._generate_perfect()
-        self._add_loops(loop_factor=0.10)
+        self._add_loops()
         self._apply_logo()
 
     # --------------------------------------------------
