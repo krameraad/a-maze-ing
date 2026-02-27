@@ -74,3 +74,17 @@
 
 # grid = create_grid(4, 4)
 # print_grid(grid)
+
+def shrink(name: str) -> str:
+    i = 0
+    buffer = ""
+    for i, letter in enumerate(name):
+        if i != 9:
+            buffer += letter
+        else:
+            break
+    return buffer
+
+
+
+print(shrink("Louishhfjj"))
