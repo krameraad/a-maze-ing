@@ -70,8 +70,8 @@ def render(maze: Maze, path: list[str]) -> None:
     # Setting correct scale ---------------------------------------------------
     w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]
     mw, mh = maze.width * ctx.scale, maze.height * ctx.scale
-    print("Maze size:", mw, mh)
-    print("Screen size:", w, h)
+    # print("Maze size:", mw, mh)
+    # print("Screen size:", w, h)
     if mw > w or mh > h:
         ctx.scale = 32
 
@@ -89,18 +89,17 @@ def render(maze: Maze, path: list[str]) -> None:
         ctx.m.mlx_clear_window(ctx.p, ctx.win[0])
         ctx.m.mlx_clear_window(ctx.p, ctx.win[1])
 
-    def render_background(color: str) -> None:
-        for y in range(maze.height):
-            for x in range(maze.width):
-                ctx.m.mlx_put_image_to_window(
-                    ctx.p, ctx.win[0],
-                    ctx.gfx[color].img,
-                    x * ctx.scale,
-                    y * ctx.scale)
-
     def render_maze_cells(subdir: str) -> None:
         for y, row in enumerate(maze.grid):
             for x, cell in enumerate(row):
+                # Draw a colored background for the cell
+                ctx.m.mlx_put_image_to_window(
+                    ctx.p, ctx.win[0],
+                    ctx.gfx[f"{subdir}color/{colors[color_i]}"].img,
+                    x * ctx.scale,
+                    y * ctx.scale)
+
+                # Draw the cell itself
                 walls = int(cell.to_hex(), 16)
                 ctx.m.mlx_put_image_to_window(
                     ctx.p,
@@ -158,7 +157,6 @@ def render(maze: Maze, path: list[str]) -> None:
 
         elif 127 < y < 255:  # Color button
             color_i = (color_i + 1) % len(colors)
-            render_background(f"tile{ctx.scale}/color/{colors[color_i]}")
             render_maze_cells(f"tile{ctx.scale}/")
             if path_visible:
                 render_path(f"tile{ctx.scale}/obj/")
@@ -166,7 +164,6 @@ def render(maze: Maze, path: list[str]) -> None:
 
         elif 255 < y < 384:  # Path button
             if path_visible:
-                render_background(f"tile{ctx.scale}/color/{colors[color_i]}")
                 render_maze_cells(f"tile{ctx.scale}/")
                 path_visible = False
             else:
@@ -187,7 +184,6 @@ def render(maze: Maze, path: list[str]) -> None:
     # Environment and initial render ------------------------------------------
     load_assets(ctx, "assets")
     create_windows()
-    render_background(f"tile{ctx.scale}/color/{colors[color_i]}")
     render_maze_cells(f"tile{ctx.scale}/")
     ctx.m.mlx_do_sync(ctx.p)
 
