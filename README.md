@@ -61,16 +61,16 @@ Close the program by clicking `Exit`, pressing `ESC` or by closing any window.
 ## Resources
 As with most projects, a lot of help was acquired through
 [GeeksforGeeks](https://www.geeksforgeeks.org/), [W3Schools](https://www.w3schools.com/),
-random YouTube videos and AI chats. Of course, other students were also very helpful.
-In particular, Wikipedia was useful this time to explain more high-level
+random YouTube videos and AI chats. Of course, other students were also supportive.
+In particular, Wikipedia taught us a lot this time to explain more high-level
 graph theory concepts like **spanning trees**.
 
 Some time ago, I (*ekramer*) watched [this video](https://youtu.be/184Oair5iys)
-on maze generation algorithms in Minecraft. I found it very interesting,
+on maze generation algorithms in Minecraft. I found it interesting,
 but it was before I really took programming seriously.
 When discovering we were doing a maze project at Codam,
 I went back to the video and learned so much.
-It was very helpful during this project, introducing a lot of algorithms
+It was super helpful during this project, introducing many algorithms
 and general concepts about mazes.
 
 In addition, me and *rulouis* read a book during this project, called
@@ -90,7 +90,7 @@ Two algorithms are important for this project: **depth-first-** and **breadth-fi
 The first traverses branches of a graph fully, before returning to the root.
 The second traverses the nodes closest to the root first, while slowly expanding outwards.
 They are very similar in implementation, but have different applications:
-DFS is useful for creating long, random branches, as with generating a maze.
+DFS is good for creating long, random branches, as with generating a maze.
 BFS is used to find the shortest path, perfect for finding the exit.
 
 [![BFS-and-DFS.png](https://i.postimg.cc/gkB3Krkn/BFS-and-DFS.png)](https://postimg.cc/VdnSfft8)
