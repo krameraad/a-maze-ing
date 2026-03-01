@@ -2,7 +2,7 @@ import os
 # import random
 from typing import Any
 from mlx import Mlx
-# import time
+import audio
 
 from maze import Maze
 
@@ -52,7 +52,7 @@ def create_windows(ctx: Context) -> None:
                                         ctx.tilesize * ctx.maze.width,
                                         ctx.tilesize * ctx.maze.height,
                                         "A-Maze-ing"))
-    ctx.win.append(ctx.m.mlx_new_window(ctx.p, 256, 512, "Controls"))
+    ctx.win.append(ctx.m.mlx_new_window(ctx.p, 256, 384, "Controls"))
     for window in ctx.win:
         ctx.m.mlx_clear_window(ctx.p, window)
 
@@ -62,23 +62,76 @@ def render(maze: Maze, path: list[str]) -> None:
 
     dir_assets = "./assets/"
     imgs: dict[str, Image] = {}
+    colors = ["color_red", "color_green", "color_blue", "color_me"]
+    color_index, color_len = 0, len(colors)
 
     regenerate = False
 
+    # Render helpers ----------------------------------------------------------
+    def render_background() -> None:
+        for y in range(maze.height):
+            for x in range(maze.width):
+                ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[0],
+                                              imgs[colors[color_index]].img,
+                                              x * ctx.tilesize,
+                                              y * ctx.tilesize)
+
+    def render_maze_cells() -> None:
+        for y, row in enumerate(maze.grid):
+            for x, cell in enumerate(row):
+                walls = int(cell.to_hex(), 16)
+                ctx.m.mlx_put_image_to_window(ctx.p,
+                                              ctx.win[0],
+                                              imgs[f"tile_{walls:04b}"].img,
+                                              x * ctx.tilesize,
+                                              y * ctx.tilesize)
+        ex, ey = maze.entry[0] * ctx.tilesize, maze.entry[1] * ctx.tilesize
+        ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[0],
+                                      imgs["tile_entry"].img, ex, ey)
+        ex, ey = maze.exit[0] * ctx.tilesize, maze.exit[1] * ctx.tilesize
+        ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[0],
+                                      imgs["tile_exit"].img, ex, ey)
+
+    def render_path() -> None:
+        x, y = maze.entry
+        for char in path:
+            match char:
+                case 'N':
+                    y -= 1
+                case 'E':
+                    x += 1
+                case 'S':
+                    y += 1
+                case 'W':
+                    x -= 1
+                case _:
+                    raise ValueError("path contains invalid character")
+            if (x, y) == maze.exit:
+                audio.stop_music()
+                break
+            ctx.m.mlx_put_image_to_window(ctx.p,
+                                          ctx.win[0],
+                                          imgs["tile_path"].img,
+                                          x * ctx.tilesize,
+                                          y * ctx.tilesize)
+            # ctx.m.mlx_do_sync(ctx.p)
+            # time.sleep(0.1)
+
     # Hooks -------------------------------------------------------------------
     def on_mouse(button, x, y, params) -> None:
-        print(f"Got mouse event! button {button} at {x},{y}.")
+        nonlocal regenerate, color_index
         if y < 127:
-            nonlocal regenerate
             regenerate = True
             ctx.m.mlx_destroy_window(ctx.p, ctx.win[0])
             ctx.m.mlx_destroy_window(ctx.p, ctx.win[1])
             ctx.m.mlx_loop_exit(ctx.p)
-        if 127 < y < 255:
-            nonlocal color_index
-            color_index += 1
-            print(color_index)
-        if y > 255:
+        elif 127 < y < 255:
+            color_index = (color_index + 1) % color_len
+            render_background()
+            render_maze_cells()
+            render_path()
+            ctx.m.mlx_do_sync(ctx.p)
+        elif y > 255:
             ctx.m.mlx_loop_exit(ctx.p)
 
     def on_key(keynum, params) -> None:
@@ -94,75 +147,22 @@ def render(maze: Maze, path: list[str]) -> None:
     for x in os.listdir(dir_assets):
         imgs[x.removesuffix(".png")] = load_image(ctx.m, ctx.p, dir_assets + x)
 
-    # Render background -------------------------------------------------------
-    colors = ["color_red", "color_green", "color_blue", "color.me"]
-    color_index, color_len = 2, len(colors)
-    if color_index > color_len:
-        color_index = 0
-
-    for y in range(maze.height):
-        for x in range(maze.width):
-            ctx.m.mlx_put_image_to_window(ctx.p,
-                                          ctx.win[0],
-                                          imgs[colors[color_index]].img,
-                                          x * ctx.tilesize,
-                                          y * ctx.tilesize)
+    # Initial render ----------------------------------------------------------
+    render_background()
+    render_maze_cells()
+    render_path()
     ctx.m.mlx_do_sync(ctx.p)
-
-    # Render the maze cells ---------------------------------------------------
-    for y, row in enumerate(maze.grid):
-        for x, cell in enumerate(row):
-            walls = int(cell.to_hex(), 16)
-            ctx.m.mlx_put_image_to_window(ctx.p,
-                                          ctx.win[0],
-                                          imgs[f"tile_{walls:04b}"].img,
-                                          x * ctx.tilesize,
-                                          y * ctx.tilesize)
-
-    # Render entry and exit ---------------------------------------------------
-    x, y = maze.entry[0] * ctx.tilesize, maze.entry[1] * ctx.tilesize
-    ctx.m.mlx_put_image_to_window(ctx.p,
-                                  ctx.win[0],
-                                  imgs["tile_entry"].img,
-                                  x, y)
-    x, y = maze.exit[0] * ctx.tilesize, maze.exit[1] * ctx.tilesize
-    ctx.m.mlx_put_image_to_window(ctx.p,
-                                  ctx.win[0],
-                                  imgs["tile_exit"].img,
-                                  x, y)
 
     # Render second window buttons --------------------------------------------
     ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
                                   imgs["button_regenerate"].img, 0, 0)
     ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
-                                  imgs["button_path"].img, 0, 128)
+                                  imgs["button_color"].img, 0, 128)
     ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
-                                  imgs["button_color"].img, 0, 256)
-    ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
-                                  imgs["button_exit"].img, 0, 384)
-
-    # Render path -------------------------------------------------------------
-    x, y = maze.entry
-    for char in path:
-        match char:
-            case 'N':
-                y -= 1
-            case 'E':
-                x += 1
-            case 'S':
-                y += 1
-            case 'W':
-                x -= 1
-            case _:
-                raise ValueError("path contains invalid character")
-        if (x, y) == maze.exit:
-            break
-        ctx.m.mlx_put_image_to_window(ctx.p,
-                                      ctx.win[0],
-                                      imgs["tile_path"].img,
-                                      x * ctx.tilesize,
-                                      y * ctx.tilesize)
-        ctx.m.mlx_do_sync(ctx.p)
+                                  imgs["button_exit"].img, 0, 256)
+    # ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
+    #                               imgs["button_path"].img, 0, 384)
+    ctx.m.mlx_do_sync(ctx.p)
 
     # Setting up hooks --------------------------------------------------------
     ctx.m.mlx_mouse_hook(ctx.win[1], on_mouse, None)

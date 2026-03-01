@@ -7,6 +7,7 @@ from writer import write_maze
 from exceptions import MazeError
 # from display import display_ascii
 from render import render
+import audio
 
 
 def main() -> None:
@@ -77,6 +78,8 @@ def main() -> None:
             print(f"Error writing maze: {e}")
             sys.exit(1)
 
+        audio.init_audio()
+        audio.play_music("kakaist-cinematic-hit-3-317170.mp3")
         regenerate = render(maze, path)
 
 
