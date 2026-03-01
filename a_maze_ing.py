@@ -1,21 +1,21 @@
 import sys
 from pathlib import Path
+
 from config import parse_config
 from maze import Maze
 from solver import MazeSolver
 from writer import write_maze
 from exceptions import MazeError
-# from display import display_ascii
-from render import render
+from render import render, RenderError
 import audio
 
 
 def main() -> None:
     """Main entry point for the A-Maze-ing program."""
 
-    # -------------------------------
-    # 1️⃣ Check command-line arguments
-    # -------------------------------
+    print("Welcome To OUR Maze Generator! 🚪")
+
+    # Check command-line arguments --------------------------------------------
     if len(sys.argv) != 2:
         print("Usage: python3 a_maze_ing.py config.txt")
         sys.exit(1)
@@ -27,12 +27,8 @@ def main() -> None:
         sys.exit(1)
 
     regenerate = True
-
     while regenerate:
-        # -------------------------------
-        # 2️⃣ Parse configuration
-        # -------------------------------
-        print("Welcome To OUR Maze Generator! 🚪")
+        # Parse configuration -------------------------------------------------
         try:
             config = parse_config(config_file)
         except Exception as e:
@@ -41,25 +37,21 @@ def main() -> None:
         except ValueError:
             print("You can only enter '1'! STUPID 👿👿👿")
 
-        # -------------------------------
-        # 3️⃣ Generate maze
-        # -------------------------------
+        # Generate maze -------------------------------------------------------
         try:
             maze = Maze(config)
             if config.perfect:
                 maze.generate_perfect()
             else:
                 maze.generate_non_perfect_maze()
-        except MazeError as me:
-            print(f"Maze generation error: {me}")
+        except MazeError as e:
+            print(f"Maze generation error: {e}")
             sys.exit(1)
         except Exception as e:
             print(f"Unexpected error during maze generation: {e}")
             sys.exit(1)
 
-        # -------------------------------
-        # 4️⃣ Solve maze for shortest path
-        # -------------------------------
+        # Solve maze for shortest path ----------------------------------------
         try:
             solver = MazeSolver(maze)
             path = solver.solve()
@@ -67,9 +59,7 @@ def main() -> None:
             print(f"Error solving maze: {e}")
             sys.exit(1)
 
-        # -------------------------------
-        # 5️⃣ Write maze to output file
-        # -------------------------------
+        # Write maze to output file -------------------------------------------
         try:
             output_path = Path(config.output_file)
             write_maze(maze, path, output_path)
@@ -80,7 +70,11 @@ def main() -> None:
 
         audio.init_audio()
         audio.play_music("kakaist-cinematic-hit-3-317170.mp3")
-        regenerate = render(maze, path)
+        try:
+            regenerate = render(maze, path)
+        except (ValueError, RenderError) as e:
+            print("Error rendering maze:", e)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

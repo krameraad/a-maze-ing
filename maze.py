@@ -15,7 +15,7 @@ class Maze:
         self.exit = config.exit
 
         # Create grid with all walls closed
-        self.grid = []
+        self.grid: list[list[Cell]] = []
 
         for row in range(self.height):
             current_row = []
@@ -24,8 +24,7 @@ class Maze:
                 current_row.append(new_cell)
             self.grid.append(current_row)
 
-    # --------------------------------------------------
-
+    # -------------------------------------------------------------------------
     def generate_perfect(self) -> None:
         """Generate perfect maze."""
         self._generate_perfect()
@@ -37,8 +36,7 @@ class Maze:
         self._add_loops()
         self._apply_logo()
 
-    # --------------------------------------------------
-
+    # -------------------------------------------------------------------------
     def _neighbors(self, x: int, y: int) -> List[Tuple[int, int]]:
         """Return valid neighbor coordinates."""
         neighbors = []
@@ -56,8 +54,7 @@ class Maze:
 
         return neighbors
 
-    # --------------------------------------------------
-
+    # -------------------------------------------------------------------------
     def _carve_passage(
         self,
         current: Tuple[int, int],
@@ -87,8 +84,7 @@ class Maze:
             cell1.open_wall("W")
             cell2.open_wall("E")
 
-    # --------------------------------------------------
-
+    # -------------------------------------------------------------------------
     def _wall_exists(
         self,
         current: Tuple[int, int],
@@ -228,14 +224,14 @@ class Maze:
         # Each tuple is (col_offset, row_offset) from anchor point
         four = [
             (0, 0), (0, 1), (0, 2),          # left vertical
-                    (1, 2), (2, 2),    # horizontal bar
-                    (2, 0), (2, 1), (2, 2), (2, 3), (2, 4),  # right vertical
+                    (1, 2), (2, 2),          # horizontal bar
+                    (2, 2), (2, 3), (2, 4),  # right vertical
         ]
         two = [
             (4, 0), (5, 0), (6, 0),          # top bar
                             (6, 1),          # top-right
             (4, 2), (5, 2), (6, 2),          # middle bar
-            (4, 3),                      # bottom-left
+            (4, 3),                          # bottom-left
             (4, 4), (5, 4), (6, 4),          # bottom bar
         ]
 
