@@ -93,6 +93,8 @@ They are very similar in implementation, but have different applications:
 DFS is useful for creating long, random branches, as with generating a maze.
 BFS is used to find the shortest path, perfect for finding the exit.
 
+[![BFS-and-DFS.png](https://i.postimg.cc/gkB3Krkn/BFS-and-DFS.png)](https://postimg.cc/VdnSfft8)
+
 ***rulouis*** was responsible for implementing these important algorithms
 (generating and solving the maze), applying the 42 logo, and parsing configuration.
 
