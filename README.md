@@ -40,6 +40,8 @@ SEED=42
 ```
 
 ### Install and run
+> Before installing anything, it'd be best to make and activate a virtual environment.
+
 The program requires the MiniLibX library to be run.
 Download the `mlx_CLXV` file from Intra, unpack it, then run `make` inside.
 This produces a `.whl` file that can be installed with `pip`.
@@ -56,6 +58,24 @@ Close the program by clicking `Exit`, pressing `ESC` or by closing any window.
 - **Color**: Cycle through 6 colors for the maze walls.
 - **Path**: Toggle a visible path from the start to the end.
 - **Exit**: Close the program.
+
+### Building the package
+`make build` can be used to build a `mazegen` package that can be installed using `pip`.
+Make sure the module `build` is installed with `pip install build`.
+The standalone maze doesn't use any configuration:
+just supply the arguments when initializing it.
+
+Simple test for the maze:
+```python
+from mazegen import Maze
+
+maze = Maze(entry=(2, 2))
+maze.generate()
+print(maze.entry)
+print(maze.exit)
+# (2, 2)
+# (14, 14)
+```
 
 
 ## Resources
