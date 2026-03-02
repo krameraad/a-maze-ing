@@ -145,7 +145,7 @@ class Maze:
                 stack.pop()
     # ------------------------------------------------------
 
-    def _add_loops(self, loop_factor=0.10):
+    def _add_loops(self, loop_factor: float = 0.10) -> None:
         walls = []
 
         for y in range(self.height):
@@ -170,7 +170,7 @@ class Maze:
 
         from collections import deque
 
-        queue = deque()
+        queue: deque = deque()
         queue.append(self.entry)
 
         came_from = {self.entry: None}
@@ -225,7 +225,7 @@ class Maze:
         four = [
             (0, 0), (0, 1), (0, 2),          # left vertical
                     (1, 2), (2, 2),          # horizontal bar
-                    (2, 2), (2, 3), (2, 4),  # right vertical
+                    (2, 3), (2, 4)  # right vertical
         ]
         two = [
             (4, 0), (5, 0), (6, 0),          # top bar

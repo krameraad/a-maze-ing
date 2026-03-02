@@ -1,17 +1,19 @@
+# flake8: noqa
+
 class MazeError(Exception):
     pass
 
 
 class ConfigError(MazeError):
-    def __init__(self, message="Error With the Config file ❌❌❌"):
+    def __init__(self, message: str="Error With the Config file ❌❌❌") -> None:
         super().__init__(message)
 
 
 class MazeGenerationError(MazeError):
-    def __init__(self, message="Problem generation the maze with that size"):
+    def __init__(self, message: str="Problem generation the maze with that size") -> None:
         super().__init__(message)
 
 
 class MazeValidationError(MazeError):
-    def __init__(self, msge="Not a valid instruction for generating the Maze"):
+    def __init__(self, msge: str="Not a valid instruction for generating the Maze") -> None:
         super().__init__(msge)

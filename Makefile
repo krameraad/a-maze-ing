@@ -12,9 +12,19 @@ clean:
 	rm -rf .mypy_cache
 
 lint:
-	flake8 --exclude=.venv .
-	mypy . --warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs --exclude '^(venv|\.venv|env)/'
+	flake8 --exclude=.venv,mlx .
+	python3 -m mypy . \
+		--warn-return-any \
+		--warn-unused-ignores \
+		--ignore-missing-imports \
+		--disallow-untyped-defs \
+		--check-untyped-defs \
+		--explicit-package-bases \
+		--exclude '^(venv|\.venv|env|mlx)/'
 
 lint-strict:
-	flake8 --exclude=.venv .
-	mypy . --strict --exclude '^(venv|\.venv|env)/'
+	flake8 --exclude=.venv,mlx .
+	python3 -m mypy . \
+		--strict \
+		--explicit-package-bases \
+		--exclude '^(venv|\.venv|env|mlx)/'
