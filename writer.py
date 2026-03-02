@@ -1,6 +1,6 @@
 from pathlib import Path
 from typing import List
-from maze import Maze
+from mazegen.maze import Maze
 
 
 def write_maze(

@@ -2,12 +2,11 @@ import sys
 from pathlib import Path
 
 from config import parse_config
-from maze import Maze
+from mazegen.maze import Maze
 from solver import MazeSolver
 from writer import write_maze
 from exceptions import MazeError
 from render import render, RenderError
-import audio
 
 
 def main() -> None:
@@ -68,8 +67,6 @@ def main() -> None:
             print(f"Error writing maze: {e}")
             sys.exit(1)
 
-        audio.init_audio()
-        audio.play_music("kakaist-cinematic-hit-3-317170.mp3")
         try:
             regenerate = render(maze, path)
         except (ValueError, RenderError) as e:

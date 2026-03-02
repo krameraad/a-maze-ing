@@ -7,11 +7,12 @@ name = "mazegen"
 version = "1.0.0"
 description = "Reusable maze generator module"
 authors = [
-    { name="Your Name" }
+    { name="ekramer"},
+    { name="rulouis"}
 ]
 readme = "README.md"
 requires-python = ">=3.8"
-dependencies = []
+dependencies = ["mypy>=1.19.1"]
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -5,3 +5,5 @@ maze.txt
 *.whl
 todo.txt
 mlx
+dist
+mazegen.egg-info

@@ -1,5 +1,5 @@
 import random
-from typing import List, Tuple
+from typing import List, Tuple, Any
 from cell import Cell
 from config import Config
 from exceptions import MazeGenerationError
@@ -170,10 +170,11 @@ class Maze:
 
         from collections import deque
 
-        queue: deque = deque()
+        queue: deque[tuple[int, int]] = deque()
         queue.append(self.entry)
 
-        came_from = {self.entry: None}
+        came_from: dict[tuple[int, int],
+                        tuple[Any, Any]] = {self.entry: (None, None)}
 
         while queue:
             current = queue.popleft()
@@ -215,7 +216,7 @@ class Maze:
 
     # ------------------------------------------------------
     # 42 LOGO
-    def _logo_cells(self) -> set:
+    def _logo_cells(self) -> set[tuple[int, int]]:
         """Return cells that form the '42' logo in the center of the maze."""
         cx = self.width // 2
         cy = self.height // 2
@@ -225,7 +226,7 @@ class Maze:
         four = [
             (0, 0), (0, 1), (0, 2),          # left vertical
                     (1, 2), (2, 2),          # horizontal bar
-                    (2, 3), (2, 4)  # right vertical
+                    (2, 0), (2, 1), (2, 3), (2, 4)  # right vertical
         ]
         two = [
             (4, 0), (5, 0), (6, 0),          # top bar

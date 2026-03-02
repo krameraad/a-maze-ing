@@ -1,10 +1,7 @@
 import os
 from typing import Any
-
 from mlx import Mlx
-import audio
-
-from maze import Maze
+from mazegen.maze import Maze
 
 
 class RenderError(Exception):
@@ -13,7 +10,7 @@ class RenderError(Exception):
 
 class Image:
     """Structure for image data"""
-    def __init__(self):
+    def __init__(self) -> None:
         self.img = None
         self.width = 0
         self.height = 0
@@ -24,7 +21,7 @@ class Image:
 
 
 class Context:
-    def __init__(self, maze: Maze):
+    def __init__(self, maze: Maze) -> None:
         self.m = Mlx()  # The MLX class itself
         self.p = self.m.mlx_init()  # Pointer to the MLX connection
         self.gfx: dict[str, Image] = {}  # gfx means graphics
@@ -62,7 +59,7 @@ def load_assets(ctx: Context, dir: str) -> None:
             ctx.gfx.update({name: get_png(ctx, file)})
 
 
-def render(maze: Maze, path: list[str]) -> None:
+def render(maze: Maze, path: list[str]) -> bool:
     ctx = Context(maze)
     regenerate = False  # Whether to regenerate the maze after ending the loop
     path_visible = False
@@ -135,7 +132,6 @@ def render(maze: Maze, path: list[str]) -> None:
                 case _:
                     raise ValueError("path contains invalid character")
             if (x, y) == maze.exit:
-                audio.stop_music()
                 break
             ctx.m.mlx_put_image_to_window(
                 ctx.p,
@@ -147,7 +143,7 @@ def render(maze: Maze, path: list[str]) -> None:
             # time.sleep(0.05)
 
     # Hooks -------------------------------------------------------------------
-    def on_mouse(button, x, y, params) -> None:
+    def on_mouse(button: int, x: int, y: int, params: Any) -> None:
         nonlocal regenerate, color_i, path_visible
         if y < 127:  # Regnerate button
             regenerate = True
@@ -174,11 +170,11 @@ def render(maze: Maze, path: list[str]) -> None:
         elif y > 384:  # Exit button
             ctx.m.mlx_loop_exit(ctx.p)
 
-    def on_key(keynum, params) -> None:
+    def on_key(keynum: int, params: Any) -> None:
         if keynum == 65307:
             ctx.m.mlx_loop_exit(ctx.p)
 
-    def on_close(dummy) -> None:
+    def on_close(dummy: Any) -> None:
         ctx.m.mlx_loop_exit(ctx.p)
 
     # Environment and initial render ------------------------------------------

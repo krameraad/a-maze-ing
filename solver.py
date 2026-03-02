@@ -1,6 +1,6 @@
-from typing import List
+from typing import List, Any
 from collections import deque
-from maze import Maze
+from mazegen.maze import Maze
 
 
 class MazeSolver:
@@ -18,7 +18,8 @@ class MazeSolver:
         end = self.maze.exit
 
         queue = deque([start])
-        came_from = {start: None}
+        came_from: dict[tuple[int, int], Any] = {start: None}
+        # came_from = {start: (None, None)}
 
         while queue:
             current = queue.popleft()
