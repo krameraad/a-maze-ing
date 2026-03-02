@@ -1,37 +1,19 @@
 from pathlib import Path
-from typing import Optional, Tuple, Dict
-from exceptions import ConfigError
+from typing import Tuple, Dict
 import random
 
 
-class Config:
-    """Represents validated maze configuration."""
+Config = tuple[int,
+               int,
+               tuple[int, int],
+               tuple[int, int],
+               Path,
+               bool,
+               int]
 
-    width: int
-    height: int
-    entry: Tuple[int, int]
-    exit: Tuple[int, int]
-    output_file: Path
-    perfect: bool
-    seed: Optional[int]
 
-    def __init__(
-        self,
-        width: int,
-        height: int,
-        entry: Tuple[int, int],
-        exit: Tuple[int, int],
-        output_file: Path,
-        perfect: bool,
-        seed: Optional[int] = None,
-    ) -> None:
-        self.width = width
-        self.height = height
-        self.entry = entry
-        self.exit = exit
-        self.output_file = output_file
-        self.perfect = perfect
-        self.seed = seed
+class ConfigError(Exception):
+    pass
 
 
 def parse_bool(value: str) -> bool:
@@ -149,17 +131,17 @@ def parse_config(file_path: Path) -> Config:
     if entry == exit_:
         raise ConfigError("ENTRY and EXIT must be different.")
 
-    seed: Optional[int] = None
+    seed = 0
     if "SEED" in data:
         seed = parse_int(data["SEED"], "SEED")
         random.seed(seed)
 
-    return Config(
-        width=width,
-        height=height,
-        entry=entry,
-        exit=exit_,
-        output_file=output_file,
-        perfect=perfect,
-        seed=seed,
+    return (
+        width,
+        height,
+        entry,
+        exit_,
+        output_file,
+        perfect,
+        seed,
     )

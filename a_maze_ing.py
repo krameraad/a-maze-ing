@@ -1,11 +1,10 @@
 import sys
 from pathlib import Path
 
-from config import parse_config
-from mazegen.maze import Maze
+from mazegen.maze import Maze, MazeError
+from config import parse_config, ConfigError
 from solver import MazeSolver
 from writer import write_maze
-from exceptions import MazeError
 from render import render, RenderError
 
 
@@ -30,7 +29,7 @@ def main() -> None:
         # Parse configuration -------------------------------------------------
         try:
             config = parse_config(config_file)
-        except Exception as e:
+        except ConfigError as e:
             print(f"Error parsing config: {e}")
             sys.exit(1)
         except ValueError:
@@ -38,17 +37,14 @@ def main() -> None:
 
         # Generate maze -------------------------------------------------------
         try:
-            maze = Maze(config)
-            if config.perfect:
-                maze.generate_perfect()
-            else:
-                maze.generate_non_perfect_maze()
+            maze = Maze(*config)
+            maze.generate()
         except MazeError as e:
             print(f"Maze generation error: {e}")
             sys.exit(1)
-        except Exception as e:
-            print(f"Unexpected error during maze generation: {e}")
-            sys.exit(1)
+        # except Exception as e:
+        #     print(f"Unexpected error during maze generation: {e}")
+        #     sys.exit(1)
 
         # Solve maze for shortest path ----------------------------------------
         try:
@@ -60,7 +56,7 @@ def main() -> None:
 
         # Write maze to output file -------------------------------------------
         try:
-            output_path = Path(config.output_file)
+            output_path = Path(config[4])
             write_maze(maze, path, output_path)
             print(f"Maze successfully written to {output_path}")
         except Exception as e:

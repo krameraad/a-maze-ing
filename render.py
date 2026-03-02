@@ -1,6 +1,7 @@
 import os
 from typing import Any
 from mlx import Mlx
+
 from mazegen.maze import Maze
 
 

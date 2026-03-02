@@ -4,6 +4,9 @@ install:
 run:
 	python3 a_maze_ing.py config.txt
 
+build:
+	python3 -m build
+
 debug:
 	python3 -m pdb a_maze_ing.py default_config.txt
 
