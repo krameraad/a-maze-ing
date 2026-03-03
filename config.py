@@ -7,7 +7,7 @@ Config = tuple[int,
                int,
                tuple[int, int],
                tuple[int, int],
-               Path,
+               str,
                bool,
                int]
 
@@ -119,7 +119,7 @@ def parse_config(file_path: Path) -> Config:
     entry = parse_coordinates(data["ENTRY"], "ENTRY")
     exit_ = parse_coordinates(data["EXIT"], "EXIT")
     perfect = parse_bool(data["PERFECT"])
-    output_file = Path(data["OUTPUT_FILE"])
+    output_file = data["OUTPUT_FILE"]
 
     if width <= 0 or height <= 0:
         raise ConfigError("WIDTH and HEIGHT must be positive integers.")
