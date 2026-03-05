@@ -1,6 +1,5 @@
 from pathlib import Path
 from typing import Tuple, Dict
-import random
 
 
 Config = tuple[int,
@@ -43,19 +42,6 @@ def parse_int(value: str, key: str) -> int:
         return int(value)
     except ValueError as error:
         raise ConfigError(f"{key} must be an integer.") from error
-
-
-def validate_coordinates(
-    coord: Tuple[int, int],
-    width: int,
-    height: int,
-    key: str,
-) -> None:
-    """Ensure coordinates are inside maze bounds."""
-    x, y = coord
-
-    if x < 0 or x >= width or y < 0 or y >= height:
-        raise ConfigError("Coordinates are out of bounds.")
 
 
 def parse_config(file_path: Path) -> Config:
@@ -121,20 +107,9 @@ def parse_config(file_path: Path) -> Config:
     perfect = parse_bool(data["PERFECT"])
     output_file = data["OUTPUT_FILE"]
 
-    if width <= 0 or height <= 0:
-        raise ConfigError("WIDTH and HEIGHT must be positive integers.")
-
-    # Validate bounds
-    validate_coordinates(entry, width, height, "ENTRY")
-    validate_coordinates(exit_, width, height, "EXIT")
-
-    if entry == exit_:
-        raise ConfigError("ENTRY and EXIT must be different.")
-
     seed = 0
     if "SEED" in data:
         seed = parse_int(data["SEED"], "SEED")
-        random.seed(seed)
 
     return (
         width,

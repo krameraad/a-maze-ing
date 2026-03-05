@@ -13,12 +13,12 @@ def write_maze(
 
     with output_path.open("w") as f:
         # Write maze grid as hex
+        out = ""
         for row in maze.grid:
-            line = ""
             for cell in row:
-                line += hex(cell.get_walls()).removeprefix("0x").upper()
-            f.write(line + "\n")
-        f.write("\n")
+                out += f"{cell.get_walls():X}"
+            out += "\n"
+        f.write(out + "\n")
 
         # Write entry and exit
         ex, ey = maze.entry

@@ -13,7 +13,7 @@ class Cell:
     south: bool = True
     west: bool = True
 
-    def get_walls(self) -> str:
+    def get_walls(self) -> int:
         """Return wall configuration as a numerical value."""
         value = 0
 
@@ -25,33 +25,16 @@ class Cell:
             value |= 0b0100
         if self.west:
             value |= 0b1000
-
         return value
-
-    def close_wall(self, direction: str) -> None:
-        """Close the wall in the given direction.
-
-        Args:
-            direction: One of 'N', 'E', 'S', 'W'.
-        """
-        direction = direction.upper()
-
-        if direction == "N":
-            self.north = True
-        elif direction == "E":
-            self.east = True
-        elif direction == "S":
-            self.south = True
-        elif direction == "W":
-            self.west = True
-        else:
-            raise ValueError(f"Invalid direction: {direction}")
 
     def open_wall(self, direction: str) -> None:
         """Open the wall in the given direction.
 
         Args:
             direction: One of 'N', 'E', 'S', 'W'.
+
+        Raises:
+            ValueError: If direction is invalid.
         """
         direction = direction.upper()
 
@@ -74,6 +57,9 @@ class Cell:
 
         Returns:
             True if wall is closed, False if open.
+
+        Raises:
+            ValueError: If direction is invalid.
         """
         direction = direction.upper()
 
@@ -85,5 +71,4 @@ class Cell:
             return self.south
         if direction == "W":
             return self.west
-
         raise ValueError(f"Invalid direction: {direction}")

@@ -4,61 +4,52 @@ from collections import deque
 from mazegen.maze import Maze
 
 
-class MazeSolver:
-    """Find shortest path inside maze."""
+def solve_maze(maze: Maze) -> List[str]:
+    """Return path as list of 'N','E','S','W'."""
 
-    def __init__(self, maze: Maze) -> None:
-        self.maze = maze
+    start = maze.entry
+    end = maze.exit
 
-    # --------------------------------------------------
+    queue = deque([start])
+    came_from: dict[tuple[int, int], Any] = {start: None}
 
-    def solve(self) -> List[str]:
-        """Return path as list of 'N','E','S','W'."""
+    while queue:
+        current = queue.popleft()
 
-        start = self.maze.entry
-        end = self.maze.exit
+        if current == end:
+            break
 
-        queue = deque([start])
-        came_from: dict[tuple[int, int], Any] = {start: None}
-        # came_from = {start: (None, None)}
+        x, y = current
+        cell = maze.grid[y][x]
 
-        while queue:
-            current = queue.popleft()
+        directions = {
+            "N": (x, y - 1),
+            "E": (x + 1, y),
+            "S": (x, y + 1),
+            "W": (x - 1, y),
+        }
 
-            if current == end:
-                break
+        for direction, (nx, ny) in directions.items():
+            x_is_valid = nx >= 0 and nx < maze.width
+            y_is_valid = ny >= 0 and ny < maze.height
+            if x_is_valid and y_is_valid:
+                # Only move if there is NO wall
+                if not cell.has_wall(direction):
+                    if (nx, ny) not in came_from:
+                        queue.append((nx, ny))
+                        came_from[(nx, ny)] = (current, direction)
 
-            x, y = current
-            cell = self.maze.grid[y][x]
+    # Reconstruct path
+    path: List[str] = []
+    current = end
+    if end not in came_from:
+        print("No path found - exit is unreachable.")
+        return []
 
-            directions = {
-                "N": (x, y - 1),
-                "E": (x + 1, y),
-                "S": (x, y + 1),
-                "W": (x - 1, y),
-            }
+    while came_from[current] is not None:
+        previous, direction = came_from[current]
+        path.append(direction)
+        current = previous
 
-            for direction, (nx, ny) in directions.items():
-                x_is_valid = nx >= 0 and nx < self.maze.width
-                y_is_valid = ny >= 0 and ny < self.maze.height
-                if x_is_valid and y_is_valid:
-                    # Only move if there is NO wall
-                    if not cell.has_wall(direction):
-                        if (nx, ny) not in came_from:
-                            queue.append((nx, ny))
-                            came_from[(nx, ny)] = (current, direction)
-
-        # Reconstruct path
-        path: List[str] = []
-        current = end
-        if end not in came_from:
-            print("⚠️  No path found — exit is unreachable.")
-            return []
-
-        while came_from[current] is not None:
-            previous, direction = came_from[current]
-            path.append(direction)
-            current = previous
-
-        path.reverse()
-        return path
+    path.reverse()
+    return path

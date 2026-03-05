@@ -2,9 +2,9 @@
 __pycache__
 .mypy_cache
 maze.txt
-*.whl
 todo.txt
 mlx
 dist
 mazegen.egg-info
+mlx*
 test

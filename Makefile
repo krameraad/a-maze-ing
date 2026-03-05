@@ -6,6 +6,7 @@ run:
 
 build:
 	python3 -m build
+	cp ./dist/mazegen-1.0.0-py3-none-any.whl .
 
 debug:
 	python3 -m pdb a_maze_ing.py default_config.txt

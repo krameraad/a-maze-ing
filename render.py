@@ -9,44 +9,15 @@ class RenderError(Exception):
     pass
 
 
-class Image:
-    """Structure for image data"""
-    def __init__(self) -> None:
-        self.img = None
-        self.width = 0
-        self.height = 0
-        self.data = None
-        self.sl = 0  # size line
-        self.bpp = 0  # bits per pixel
-        self.iformat = 0
-
-
 class Context:
+    """Holds all data relevant across rendering."""
     def __init__(self, maze: Maze) -> None:
         self.m = Mlx()  # The MLX class itself
         self.p = self.m.mlx_init()  # Pointer to the MLX connection
-        self.gfx: dict[str, Image] = {}  # gfx means graphics
+        self.gfx: dict[str, Any] = {}  # gfx means graphics
         self.win: list[Any] = []  # All our created windows
         self.maze = maze
         self.scale = 64  # Size of a tile (could be 32 or 64 pixels)
-
-
-def get_png(ctx: Context, file: str) -> Image:
-    """Returns a PNG image loaded from a filename."""
-    img = Image()
-
-    result = ctx.m.mlx_png_file_to_image(ctx.p, file)
-    if not result:
-        raise RenderError(f"failed loading PNG from {file}")
-    img.img, img.width, img.height = result
-    if not img.img:
-        raise RenderError(f"failed creating image from {file}")
-
-    # Get address
-    img.data, img.bpp, img.sl, img.iformat = \
-        ctx.m.mlx_get_data_addr(img.img)
-
-    return img
 
 
 def load_assets(ctx: Context, dir: str) -> None:
@@ -57,20 +28,34 @@ def load_assets(ctx: Context, dir: str) -> None:
             load_assets(ctx, file)
         else:
             name = file.removeprefix("assets/").removesuffix(".png")
-            ctx.gfx.update({name: get_png(ctx, file)})
+            ctx.gfx.update(
+                {name: ctx.m.mlx_png_file_to_image(ctx.p, file)[0]})
+            if not ctx.gfx[name]:
+                raise RenderError(f"failed loading PNG from {file}")
 
 
 def render(maze: Maze, path: list[str]) -> bool:
+    """Render the maze using MLX.
+
+    Args:
+        maze: Maze to render.
+        path: Path from the entry to the exit.
+
+    Returns:
+        bool: Whether to regenerate the maze after the loop exits.
+
+    Raises:
+        RenderError: When the assets fail to load.
+        ValueError: If the path contains invalid characters."""
     ctx = Context(maze)
+    load_assets(ctx, "assets")
+
     regenerate = False  # Whether to regenerate the maze after ending the loop
     path_visible = False
 
     # Setting correct scale ---------------------------------------------------
-    w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]
-    mw, mh = maze.width * ctx.scale, maze.height * ctx.scale
-    # print("Maze size:", mw, mh)
-    # print("Screen size:", w, h)
-    if mw > w or mh > h:
+    w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]  # Discard first element (Any)
+    if maze.width * ctx.scale > w or maze.height * ctx.scale > h:
         ctx.scale = 32
 
     # Colors ------------------------------------------------------------------
@@ -79,21 +64,36 @@ def render(maze: Maze, path: list[str]) -> bool:
 
     # Render helpers ----------------------------------------------------------
     def create_windows() -> None:
-        ctx.win.append(ctx.m.mlx_new_window(ctx.p,
-                                            ctx.scale * ctx.maze.width,
-                                            ctx.scale * ctx.maze.height,
-                                            "A-Maze-ing"))
+        """Create two windows and render the buttons inside."""
+        ctx.win.append(
+            ctx.m.mlx_new_window(
+                ctx.p,
+                ctx.scale * ctx.maze.width,
+                ctx.scale * ctx.maze.height,
+                "A-Maze-ing"))
         ctx.win.append(ctx.m.mlx_new_window(ctx.p, 256, 512, "Controls"))
         ctx.m.mlx_clear_window(ctx.p, ctx.win[0])
         ctx.m.mlx_clear_window(ctx.p, ctx.win[1])
 
+        ctx.m.mlx_put_image_to_window(
+            ctx.p, ctx.win[1], ctx.gfx["button/regenerate"], 0, 0)
+        ctx.m.mlx_put_image_to_window(
+            ctx.p, ctx.win[1], ctx.gfx["button/color"], 0, 128)
+        ctx.m.mlx_put_image_to_window(
+            ctx.p, ctx.win[1], ctx.gfx["button/path"], 0, 256)
+        ctx.m.mlx_put_image_to_window(
+            ctx.p, ctx.win[1], ctx.gfx["button/exit"], 0, 384)
+        ctx.m.mlx_do_sync(ctx.p)
+
     def render_maze_cells(subdir: str) -> None:
+        """Render the backgrounds for the cells, the cells themselves,
+        and the entry and exit."""
         for y, row in enumerate(maze.grid):
             for x, cell in enumerate(row):
                 # Draw a colored background for the cell
                 ctx.m.mlx_put_image_to_window(
                     ctx.p, ctx.win[0],
-                    ctx.gfx[f"{subdir}color/{colors[color_i]}"].img,
+                    ctx.gfx[f"{subdir}color/{colors[color_i]}"],
                     x * ctx.scale,
                     y * ctx.scale)
 
@@ -102,7 +102,7 @@ def render(maze: Maze, path: list[str]) -> bool:
                 ctx.m.mlx_put_image_to_window(
                     ctx.p,
                     ctx.win[0],
-                    ctx.gfx[f"{subdir}{walls:04b}"].img,
+                    ctx.gfx[f"{subdir}{walls:04b}"],
                     x * ctx.scale,
                     y * ctx.scale)
 
@@ -110,17 +110,18 @@ def render(maze: Maze, path: list[str]) -> bool:
         ctx.m.mlx_put_image_to_window(
             ctx.p,
             ctx.win[0],
-            ctx.gfx[f"{subdir}obj/entry"].img, x, y)
+            ctx.gfx[f"{subdir}obj/entry"], x, y)
 
         x, y = maze.exit[0] * ctx.scale, maze.exit[1] * ctx.scale
         ctx.m.mlx_put_image_to_window(
             ctx.p,
             ctx.win[0],
-            ctx.gfx[f"{subdir}obj/exit"].img, x, y)
+            ctx.gfx[f"{subdir}obj/exit"], x, y)
 
     def render_path(subdir: str) -> None:
+        """Render the path to the exit."""
         x, y = maze.entry
-        for char in path:
+        for char in path[:-1]:  # Everything but the last element
             match char:
                 case 'N':
                     y -= 1
@@ -132,16 +133,13 @@ def render(maze: Maze, path: list[str]) -> bool:
                     x -= 1
                 case _:
                     raise ValueError("path contains invalid character")
-            if (x, y) == maze.exit:
-                break
             ctx.m.mlx_put_image_to_window(
                 ctx.p,
                 ctx.win[0],
-                ctx.gfx[f"{subdir}path"].img,
+                ctx.gfx[f"{subdir}path"],
                 x * ctx.scale,
                 y * ctx.scale)
-            # ctx.m.mlx_do_sync(ctx.p)
-            # time.sleep(0.05)
+            ctx.m.mlx_do_sync(ctx.p)
 
     # Hooks -------------------------------------------------------------------
     def on_mouse(button: int, x: int, y: int, params: Any) -> None:
@@ -179,20 +177,8 @@ def render(maze: Maze, path: list[str]) -> bool:
         ctx.m.mlx_loop_exit(ctx.p)
 
     # Environment and initial render ------------------------------------------
-    load_assets(ctx, "assets")
     create_windows()
     render_maze_cells(f"tile{ctx.scale}/")
-    ctx.m.mlx_do_sync(ctx.p)
-
-    # Render second window buttons --------------------------------------------
-    ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
-                                  ctx.gfx["button/regenerate"].img, 0, 0)
-    ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
-                                  ctx.gfx["button/color"].img, 0, 128)
-    ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
-                                  ctx.gfx["button/path"].img, 0, 256)
-    ctx.m.mlx_put_image_to_window(ctx.p, ctx.win[1],
-                                  ctx.gfx["button/exit"].img, 0, 384)
     ctx.m.mlx_do_sync(ctx.p)
 
     # Setting up hooks --------------------------------------------------------

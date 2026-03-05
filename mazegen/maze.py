@@ -1,6 +1,5 @@
 import sys
 import random
-from typing import List, Tuple, Any
 
 from mazegen.cell import Cell
 
@@ -11,14 +10,12 @@ class MazeError(Exception):
 
 class Maze:
     """Maze structure and generation logic."""
-
     def __init__(
             self,
             width: int = 15,
             height: int = 15,
             entry: tuple[int, int] = (0, 0),
             exit: tuple[int, int] = (14, 14),
-            path: str = "maze.txt",
             perfect: bool = False,
             seed: int = 0
             ) -> None:
@@ -26,53 +23,54 @@ class Maze:
         self.height = height
         self.entry = entry
         self.exit = exit
-        self.path = path
         self.perfect = perfect
         self.seed = seed
-        self.ready = False
+        self.logo = self._logo_cells()
 
-        # Create grid with all walls closed
+        # Validate and correct arguments.
+        if self.width <= 1:
+            print("Maze width invalid, must be more than 1", file=sys.stderr)
+            self.width = 15
+        if self.height <= 1:
+            print("Maze height invalid, must be more than 1", file=sys.stderr)
+            self.height = 15
+        x, y = self.entry
+        if not 0 <= x < width or not 0 <= y < height:
+            print("Entry coordinates are out of bounds.", file=sys.stderr)
+            self.entry = (0, 0)
+        x, y = self.exit
+        if not 0 <= x < width or not 0 <= y < height:
+            print("Exit coordinates are out of bounds.", file=sys.stderr)
+            self.exit = (self.width - 1, self.height - 1)
+        if self.entry == self.exit:
+            print("Entry and exit share coordinates.", file=sys.stderr)
+            self.entry = (0, 0)
+            self.exit = (self.width - 1, self.height - 1)
+
+        # Create grid filled with closed cells
         self.grid: list[list[Cell]] = []
-
-        def validate_coordinates(
-            coord: Tuple[int, int],
-            width: int,
-            height: int,
-        ) -> None:
-            """Ensure coordinates are inside maze bounds."""
-            x, y = coord
-
-            if x < 0 or x >= width or y < 0 or y >= height:
-                raise ValueError("Coordinates are out of bounds.")
-
-        try:
-            if self.width <= 0 or self.height <= 0:
-                raise ValueError("WIDTH and HEIGHT must be positive integers.")
-
-            validate_coordinates(self.entry, self.width, self.height)
-            validate_coordinates(self.exit, self.width, self.height)
-        except ValueError as e:
-            print("Error with maze settings:", e)
-            return
-
-        for row in range(self.height):
+        for y in range(self.height):
             current_row = []
-            for col in range(self.width):
-                new_cell = Cell(True, True, True, True)
-                current_row.append(new_cell)
+            for x in range(self.width):
+                current_row.append(Cell(True, True, True, True))
             self.grid.append(current_row)
 
-        self.ready = True
+        self.generate()
 
-    # -------------------------------------------------------------------------
+    def __repr__(self) -> str:
+        return f"Maze({self.width=}, " \
+               f"{self.height=}, " \
+               f"{self.entry=}, " \
+               f"{self.exit=}, " \
+               f"{self.perfect=}, " \
+               f"{self.seed=}" \
+                ")".replace("self.", "")
+
     def generate(self) -> None:
+        """Generate the maze layout."""
         if self.seed > 0:
             random.seed(self.seed)
-        if not self.ready:
-            print("Maze tried to generate with incorrect settings")
-            return
 
-        logo = self._logo_cells()
         visited = set()
         stack = []
 
@@ -85,10 +83,9 @@ class Maze:
             x, y = current
 
             # Get unvisited neighbors
-
             unvisited = []
             for nx, ny in self._neighbors(x, y):
-                if (nx, ny) not in visited and (nx, ny) not in logo:
+                if (nx, ny) not in visited and (nx, ny) not in self.logo:
                     unvisited.append((nx, ny))
 
             if unvisited:
@@ -102,11 +99,9 @@ class Maze:
                 stack.pop()
 
         if not self.perfect:
-            self.open_dead_ends()
-        self._apply_logo()
+            self._open_dead_ends()
 
-    # -------------------------------------------------------------------------
-    def _neighbors(self, x: int, y: int) -> List[Tuple[int, int]]:
+    def _neighbors(self, x: int, y: int) -> list[tuple[int, int]]:
         """Return valid neighbor coordinates."""
         neighbors = []
 
@@ -123,11 +118,10 @@ class Maze:
 
         return neighbors
 
-    # -------------------------------------------------------------------------
     def _carve_passage(
         self,
-        current: Tuple[int, int],
-        neighbor: Tuple[int, int],
+        current: tuple[int, int],
+        neighbor: tuple[int, int],
     ) -> None:
         """Remove walls between two adjacent cells."""
 
@@ -153,34 +147,7 @@ class Maze:
             cell1.open_wall("W")
             cell2.open_wall("E")
 
-    # -------------------------------------------------------------------------
-    def _wall_exists(
-        self,
-        current: Tuple[int, int],
-        neighbor: Tuple[int, int],
-    ) -> bool:
-
-        x1, y1 = current
-        x2, y2 = neighbor
-
-        cell = self.grid[y1][x1]
-
-        if x2 == x1 and y2 == y1 - 1:
-            return cell.has_wall("N")
-
-        elif x2 == x1 + 1 and y2 == y1:
-            return cell.has_wall("E")
-
-        elif x2 == x1 and y2 == y1 + 1:
-            return cell.has_wall("S")
-
-        elif x2 == x1 - 1 and y2 == y1:
-            return cell.has_wall("W")
-
-        return False
-
-    # -------------------------------------------------------------------------
-    def open_dead_ends(self) -> None:
+    def _open_dead_ends(self) -> None:
         """Make all eligible dead-ends into straight corridors."""
         # Which dead-end orientation corresponds to which direction.
         directions = {0b1110: (0, +1),
@@ -191,70 +158,29 @@ class Maze:
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
                 walls = cell.get_walls()
-                # Check that we're dealing with any of the dead-end rotations.
+                # Check that we're dealing with any of the dead-end variants.
                 if walls not in directions:
                     continue
                 direction = directions[walls]
                 nx, ny = (direction[0] + x, direction[1] + y)  # Target cell.
-                # Validate that the target is within the maze bounds.
-                if 0 <= nx < self.width and 0 <= ny < self.height:
+                # Validate that the target is within the maze bounds,
+                # and that the target is not part of the logo.
+                if 0 <= nx < self.width and 0 <= ny < self.height \
+                        and (nx, ny) not in self.logo:
                     self._carve_passage((x, y), (nx, ny))
 
-    # -------------------------------------------------------------------------
-    def shortest_path(self) -> List[str]:
-        """Return shortest path from entry to exit using NSEW."""
-
-        from collections import deque
-
-        queue: deque[tuple[int, int]] = deque()
-        queue.append(self.entry)
-
-        came_from: dict[tuple[int, int],
-                        tuple[Any, Any]] = {self.entry: (None, None)}
-
-        while queue:
-            current = queue.popleft()
-
-            if current == self.exit:
-                break
-
-            x, y = current
-            cell = self.grid[y][x]
-
-            directions = {
-                "N": (x, y - 1),
-                "E": (x + 1, y),
-                "S": (x, y + 1),
-                "W": (x - 1, y),
-            }
-
-            for direction, (nx, ny) in directions.items():
-                if 0 <= nx < self.width and 0 <= ny < self.height:
-                    if not cell.has_wall(direction):
-                        if (nx, ny) not in came_from:
-                            queue.append((nx, ny))
-                            came_from[(nx, ny)] = (current, direction)
-
-        # Reconstruct path
-        if self.exit not in came_from:
-            return []
-
-        path = []
-        current = self.exit
-
-        while came_from[current] is not None:
-            previous, direction = came_from[current]
-            path.append(direction)
-            current = previous
-
-        path.reverse()
-        return path
-
-    # -------------------------------------------------------------------------
     def _logo_cells(self) -> set[tuple[int, int]]:
         """Return cells that form the '42' logo in the center of the maze."""
         cx = self.width // 2
         cy = self.height // 2
+
+        MIN_WIDTH, MIN_HEIGHT = 9, 7
+        if self.width < MIN_WIDTH or self.height < MIN_HEIGHT:
+            print(f"Maze too small for '42' logo"
+                  f"(minimum {MIN_WIDTH}x{MIN_HEIGHT}, "
+                  f"got {self.width}x{self.height}).",
+                  file=sys.stderr)
+            return set()
 
         # Pixel art pattern for "42" (relative offsets from center-left)
         # Each tuple is (col_offset, row_offset) from anchor point
@@ -282,61 +208,3 @@ class Maze:
                 cells.add((col, row))
 
         return cells
-
-    # -------------------------------------------------------------------------
-    def _apply_logo(self) -> None:
-        """Re-wall all logo cells to form '42' in the center."""
-
-        MIN_WIDTH = 9
-        MIN_HEIGHT = 7
-
-        if self.width < MIN_WIDTH or self.height < MIN_HEIGHT:
-            print(
-                f"Maze too small for '42' logo"
-                f"(minimum {MIN_WIDTH}x{MIN_HEIGHT}, "
-                f"got {self.width}x{self.height}).",
-                file=sys.stderr
-            )
-            return
-
-        logo = self._logo_cells()
-
-        # Check BEFORE discarding
-        if self.entry in logo:
-            raise MazeError(
-                f"Entry point {self.entry} "
-                f"conflicts with the '42' logo position."
-            )
-        if self.exit in logo:
-            raise MazeError(
-                f"Exit point {self.exit} "
-                f"conflicts with the '42' logo position."
-            )
-
-        # Now safe to proceed
-        protected = set()
-        protected.add(self.entry)
-        protected.add(self.exit)
-        for pos in [self.entry, self.exit]:
-            x, y = pos
-            for nx, ny in self._neighbors(x, y):
-                protected.add((nx, ny))
-
-        logo -= protected
-
-        for (x, y) in logo:
-            cell = self.grid[y][x]
-            cell.close_wall("N")
-            cell.close_wall("E")
-            cell.close_wall("S")
-            cell.close_wall("W")
-
-            for direction, (nx, ny), opposite in [
-                ("N", (x, y-1), "S"),
-                ("E", (x+1, y), "W"),
-                ("S", (x, y+1), "N"),
-                ("W", (x-1, y), "E"),
-            ]:
-                if 0 <= nx < self.width and 0 <= ny < self.height:
-                    if (nx, ny) not in logo:
-                        self.grid[ny][nx].close_wall(opposite)
