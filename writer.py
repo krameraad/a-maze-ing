@@ -16,8 +16,7 @@ def write_maze(
         for row in maze.grid:
             line = ""
             for cell in row:
-                hex_value = cell.to_hex()
-                line = line + hex_value
+                line += hex(cell.get_walls()).removeprefix("0x").upper()
             f.write(line + "\n")
         f.write("\n")
 

@@ -1,3 +1,4 @@
+import sys
 import random
 from typing import List, Tuple, Any
 
@@ -70,20 +71,38 @@ class Maze:
         if not self.ready:
             print("Maze tried to generate with incorrect settings")
             return
-        if self.perfect:
-            self.generate_perfect()
-        else:
-            self.generate_non_perfect_maze()
 
-    def generate_perfect(self) -> None:
-        """Generate perfect maze."""
-        self._generate_perfect()
-        self._apply_logo()
+        logo = self._logo_cells()
+        visited = set()
+        stack = []
 
-    def generate_non_perfect_maze(self) -> None:
-        """Generate NON perfect maze"""
-        self._generate_perfect()
-        self._add_loops()
+        start = (0, 0)
+        stack.append(start)
+        visited.add(start)
+
+        while stack:
+            current = stack[-1]
+            x, y = current
+
+            # Get unvisited neighbors
+
+            unvisited = []
+            for nx, ny in self._neighbors(x, y):
+                if (nx, ny) not in visited and (nx, ny) not in logo:
+                    unvisited.append((nx, ny))
+
+            if unvisited:
+                neighbor = random.choice(unvisited)
+
+                self._carve_passage(current, neighbor)
+
+                visited.add(neighbor)
+                stack.append(neighbor)
+            else:
+                stack.pop()
+
+        if not self.perfect:
+            self.open_dead_ends()
         self._apply_logo()
 
     # -------------------------------------------------------------------------
@@ -161,56 +180,25 @@ class Maze:
         return False
 
     # -------------------------------------------------------------------------
-    def _generate_perfect(self) -> None:
-        """Generate perfect maze using DFS backtracking."""
+    def open_dead_ends(self) -> None:
+        """Make all eligible dead-ends into straight corridors."""
+        # Which dead-end orientation corresponds to which direction.
+        directions = {0b1110: (0, +1),
+                      0b1101: (-1, 0),
+                      0b1011: (0, -1),
+                      0b0111: (+1, 0)}
 
-        logo = self._logo_cells()
-        visited = set()
-        stack = []
-
-        start = (0, 0)
-        stack.append(start)
-        visited.add(start)
-
-        while stack:
-            current = stack[-1]
-            x, y = current
-
-            # Get unvisited neighbors
-
-            unvisited = []
-            for nx, ny in self._neighbors(x, y):
-                if (nx, ny) not in visited and (nx, ny) not in logo:
-                    unvisited.append((nx, ny))
-
-            if unvisited:
-                neighbor = random.choice(unvisited)
-
-                self._carve_passage(current, neighbor)
-
-                visited.add(neighbor)
-                stack.append(neighbor)
-            else:
-                stack.pop()
-
-    # -------------------------------------------------------------------------
-    def _add_loops(self, loop_factor: float = 0.10) -> None:
-        walls = []
-
-        for y in range(self.height):
-            for x in range(self.width):
-                for nx, ny in self._neighbors(x, y):
-                    # Only consider East and South to avoid duplicates
-                    if nx > x or ny > y:
-                        if self._wall_exists((x, y), (nx, ny)):
-                            walls.append(((x, y), (nx, ny)))
-
-        random.shuffle(walls)
-
-        loops_to_add = int(len(walls) * loop_factor)
-
-        for i in range(loops_to_add):
-            self._carve_passage(*walls[i])
+        for y, row in enumerate(self.grid):
+            for x, cell in enumerate(row):
+                walls = cell.get_walls()
+                # Check that we're dealing with any of the dead-end rotations.
+                if walls not in directions:
+                    continue
+                direction = directions[walls]
+                nx, ny = (direction[0] + x, direction[1] + y)  # Target cell.
+                # Validate that the target is within the maze bounds.
+                if 0 <= nx < self.width and 0 <= ny < self.height:
+                    self._carve_passage((x, y), (nx, ny))
 
     # -------------------------------------------------------------------------
     def shortest_path(self) -> List[str]:
@@ -299,15 +287,17 @@ class Maze:
     def _apply_logo(self) -> None:
         """Re-wall all logo cells to form '42' in the center."""
 
-        MIN_WIDTH = 12
+        MIN_WIDTH = 9
         MIN_HEIGHT = 7
 
         if self.width < MIN_WIDTH or self.height < MIN_HEIGHT:
-            raise MazeError(
+            print(
                 f"Maze too small for '42' logo"
                 f"(minimum {MIN_WIDTH}x{MIN_HEIGHT}, "
-                f"got {self.width}x{self.height})."
+                f"got {self.width}x{self.height}).",
+                file=sys.stderr
             )
+            return
 
         logo = self._logo_cells()
 

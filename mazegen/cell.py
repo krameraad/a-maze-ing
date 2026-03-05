@@ -13,24 +13,20 @@ class Cell:
     south: bool = True
     west: bool = True
 
-    def to_hex(self) -> str:
-        """Convert wall configuration to hexadecimal digit.
-
-        Returns:
-            A single hexadecimal character representing the walls.
-        """
-        value: int = 0
+    def get_walls(self) -> str:
+        """Return wall configuration as a numerical value."""
+        value = 0
 
         if self.north:
-            value |= 1  # 0001
+            value |= 0b0001
         if self.east:
-            value |= 2  # 0010
+            value |= 0b0010
         if self.south:
-            value |= 4  # 0100
+            value |= 0b0100
         if self.west:
-            value |= 8  # 1000
+            value |= 0b1000
 
-        return format(value, "X")
+        return value
 
     def close_wall(self, direction: str) -> None:
         """Close the wall in the given direction.

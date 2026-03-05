@@ -98,7 +98,7 @@ def render(maze: Maze, path: list[str]) -> bool:
                     y * ctx.scale)
 
                 # Draw the cell itself
-                walls = int(cell.to_hex(), 16)
+                walls = cell.get_walls()
                 ctx.m.mlx_put_image_to_window(
                     ctx.p,
                     ctx.win[0],
