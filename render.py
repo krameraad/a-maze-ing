@@ -12,12 +12,20 @@ class RenderError(Exception):
 class Context:
     """Holds all data relevant across rendering."""
     def __init__(self, maze: Maze) -> None:
-        self.m = Mlx()  # The MLX class itself
-        self.p = self.m.mlx_init()  # Pointer to the MLX connection
-        self.gfx: dict[str, Any] = {}  # gfx means graphics
-        self.win: list[Any] = []  # All our created windows
+        self.m = Mlx()
+        "The MLX class itself."
+        self.p = self.m.mlx_init()
+        "Pointer to the MLX connection."
+        self.gfx: dict[str, Any] = {}
+        """Dictionary of all loaded images. `gfx` means graphics.
+        Images are of type `Any` and the key for each image is
+        its filepath inside the assets folder."""
+        self.win: list[Any] = []
+        "All our created windows."
         self.maze = maze
-        self.scale = 64  # Size of a tile (could be 32 or 64 pixels)
+        "Maze data."
+        self.scale = 64
+        "Size of a tile (could be 32 or 64 pixels)."
 
 
 def load_assets(ctx: Context, dir: str) -> None:
@@ -50,17 +58,17 @@ def render(maze: Maze, path: list[str]) -> bool:
     ctx = Context(maze)
     load_assets(ctx, "assets")
 
-    regenerate = False  # Whether to regenerate the maze after ending the loop
+    regenerate = False  # Whether to regenerate the maze after ending the loop.
     path_visible = False
 
     # Setting correct scale ---------------------------------------------------
-    w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]  # Discard first element (Any)
+    w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]  # Discard first element (Any).
     if maze.width * ctx.scale > w or maze.height * ctx.scale > h:
         ctx.scale = 32
 
     # Colors ------------------------------------------------------------------
     colors = ["red", "green", "blue", "cyan", "pink", "yellow"]
-    color_i = 0  # Index of the currently used color
+    color_i = 0  # Index of the currently used color.
 
     # Render helpers ----------------------------------------------------------
     def create_windows() -> None:
@@ -71,7 +79,12 @@ def render(maze: Maze, path: list[str]) -> bool:
                 ctx.scale * ctx.maze.width,
                 ctx.scale * ctx.maze.height,
                 "A-Maze-ing"))
-        ctx.win.append(ctx.m.mlx_new_window(ctx.p, 256, 512, "Controls"))
+        ctx.win.append(
+            ctx.m.mlx_new_window(
+                ctx.p,
+                256,
+                512,
+                "Controls"))
         ctx.m.mlx_clear_window(ctx.p, ctx.win[0])
         ctx.m.mlx_clear_window(ctx.p, ctx.win[1])
 
@@ -88,16 +101,17 @@ def render(maze: Maze, path: list[str]) -> bool:
     def render_maze_cells(subdir: str) -> None:
         """Render the backgrounds for the cells, the cells themselves,
         and the entry and exit."""
+        ctx.m.mlx_do_sync(ctx.p)  # Reduces chance of corruption.
         for y, row in enumerate(maze.grid):
             for x, cell in enumerate(row):
-                # Draw a colored background for the cell
+                # Draw a colored background for the cell.
                 ctx.m.mlx_put_image_to_window(
                     ctx.p, ctx.win[0],
                     ctx.gfx[f"{subdir}color/{colors[color_i]}"],
                     x * ctx.scale,
                     y * ctx.scale)
 
-                # Draw the cell itself
+                # Draw the cell itself.
                 walls = cell.get_walls()
                 ctx.m.mlx_put_image_to_window(
                     ctx.p,
@@ -120,8 +134,10 @@ def render(maze: Maze, path: list[str]) -> bool:
 
     def render_path(subdir: str) -> None:
         """Render the path to the exit."""
+        ctx.m.mlx_do_sync(ctx.p)  # Reduces chance of corruption.
         x, y = maze.entry
-        for char in path[:-1]:  # Everything but the last element
+        # Everything but the last element; we don't want to draw over the exit.
+        for char in path[:-1]:
             match char:
                 case 'N':
                     y -= 1
@@ -144,20 +160,20 @@ def render(maze: Maze, path: list[str]) -> bool:
     # Hooks -------------------------------------------------------------------
     def on_mouse(button: int, x: int, y: int, params: Any) -> None:
         nonlocal regenerate, color_i, path_visible
-        if y < 127:  # Regnerate button
+        if y < 127:  # Regenerate button.
             regenerate = True
             ctx.m.mlx_destroy_window(ctx.p, ctx.win[0])
             ctx.m.mlx_destroy_window(ctx.p, ctx.win[1])
             ctx.m.mlx_loop_exit(ctx.p)
 
-        elif 127 < y < 255:  # Color button
+        elif 127 < y < 255:  # Color button.
             color_i = (color_i + 1) % len(colors)
             render_maze_cells(f"tile{ctx.scale}/")
             if path_visible:
                 render_path(f"tile{ctx.scale}/obj/")
             ctx.m.mlx_do_sync(ctx.p)
 
-        elif 255 < y < 384:  # Path button
+        elif 255 < y < 384:  # Path button.
             if path_visible:
                 render_maze_cells(f"tile{ctx.scale}/")
                 path_visible = False
@@ -166,7 +182,7 @@ def render(maze: Maze, path: list[str]) -> bool:
                 path_visible = True
             ctx.m.mlx_do_sync(ctx.p)
 
-        elif y > 384:  # Exit button
+        elif y > 384:  # Exit button.
             ctx.m.mlx_loop_exit(ctx.p)
 
     def on_key(keynum: int, params: Any) -> None:
