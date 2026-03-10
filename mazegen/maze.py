@@ -30,10 +30,10 @@ class Maze:
         # Validate and correct arguments.
         if self.width <= 1:
             print("Maze width invalid, must be more than 1", file=sys.stderr)
-            self.width = 15
+            self.width = 25
         if self.height <= 1:
             print("Maze height invalid, must be more than 1", file=sys.stderr)
-            self.height = 15
+            self.height = 25
         x, y = self.entry
         if not 0 <= x < width or not 0 <= y < height:
             print("Entry coordinates are out of bounds.", file=sys.stderr)
@@ -47,12 +47,12 @@ class Maze:
             self.entry = (0, 0)
             self.exit = (self.width - 1, self.height - 1)
 
-        # Create grid filled with closed cells
+        # Create grid of cells.
         self.grid: list[list[Cell]] = []
         for y in range(self.height):
             current_row = []
             for x in range(self.width):
-                current_row.append(Cell(True, True, True, True))
+                current_row.append(Cell())
             self.grid.append(current_row)
 
         self.generate()
@@ -68,20 +68,20 @@ class Maze:
 
     def generate(self) -> None:
         """Generate the maze layout."""
-        if self.seed > 0:
+        if self.seed != 0:
             random.seed(self.seed)
 
-        visited = set()
-        stack = []
+        # Close all cells.
+        for row in self.grid:
+            for cell in row:
+                cell.walls = 0b1111
 
-        start = (0, 0)
-        stack.append(start)
-        visited.add(start)
+        visited = {(0, 0)}
+        stack = [(0, 0)]
 
         while stack:
             current = stack[-1]
             x, y = current
-
             # Get unvisited neighbors
             unvisited = []
             for nx, ny in self._neighbors(x, y):
@@ -90,9 +90,7 @@ class Maze:
 
             if unvisited:
                 neighbor = random.choice(unvisited)
-
                 self._carve_passage(current, neighbor)
-
                 visited.add(neighbor)
                 stack.append(neighbor)
             else:
@@ -109,8 +107,7 @@ class Maze:
             (x, y - 1),  # North
             (x + 1, y),  # East
             (x, y + 1),  # South
-            (x - 1, y),  # West
-        ]
+            (x - 1, y)]  # West
 
         for nx, ny in directions:
             if 0 <= nx < self.width and 0 <= ny < self.height:
@@ -150,18 +147,18 @@ class Maze:
     def _open_dead_ends(self) -> None:
         """Make all eligible dead-ends into straight corridors."""
         # Which dead-end orientation corresponds to which direction.
-        directions = {0b1110: (0, +1),
-                      0b1101: (-1, 0),
-                      0b1011: (0, -1),
-                      0b0111: (+1, 0)}
+        DIRECTIONS = {
+            0b1110: (0, +1),
+            0b1101: (-1, 0),
+            0b1011: (0, -1),
+            0b0111: (+1, 0)}
 
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
-                walls = cell.get_walls()
                 # Check that we're dealing with any of the dead-end variants.
-                if walls not in directions:
+                if cell.walls not in DIRECTIONS:
                     continue
-                direction = directions[walls]
+                direction = DIRECTIONS[cell.walls]
                 nx, ny = (direction[0] + x, direction[1] + y)  # Target cell.
                 # Validate that the target is within the maze bounds,
                 # and that the target is not part of the logo.

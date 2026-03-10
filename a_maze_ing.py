@@ -10,7 +10,7 @@ from render import render, RenderError
 
 print("\033[1mWelcome to A-Maze-ing!\033[0m")
 
-# Check command-line arguments --------------------------------------------
+# Check command-line arguments ------------------------------------------------
 if len(sys.argv) != 2:
     print("Usage: python3 a_maze_ing.py config.txt")
     sys.exit(1)
@@ -23,29 +23,28 @@ if not config_file.exists():
 
 regenerate = True
 while regenerate:
-    # Parse configuration -------------------------------------------------
+    # Parse configuration -----------------------------------------------------
     try:
         config = parse_config(config_file)
     except ConfigError as e:
         print(f"Error parsing config: {e}")
         sys.exit(1)
 
-    # Generate maze -------------------------------------------------------
+    # Generate maze -----------------------------------------------------------
     try:
         maze = Maze(*config[:4], *config[5:])
-        # maze.generate()
     except MazeError as e:
         print(f"Maze generation error: {e}")
         sys.exit(1)
 
-    # Solve maze for shortest path ----------------------------------------
+    # Solve maze for shortest path --------------------------------------------
     try:
         path = solve_maze(maze)
     except Exception as e:
         print(f"Error solving maze: {e}")
         sys.exit(1)
 
-    # Write maze to output file -------------------------------------------
+    # Write maze to output file -----------------------------------------------
     try:
         output_path = Path(config[4])
         write_maze(maze, path, output_path)

@@ -1,74 +1,25 @@
-from dataclasses import dataclass
+from typing import Final
 
 
-@dataclass
 class Cell:
     """Represents a maze cell with four walls.
 
     Each wall is True if closed, False if open.
     """
+    WALLMAP: Final = {
+        "N": 0b0001,
+        "E": 0b0010,
+        "S": 0b0100,
+        "W": 0b1000}
+    "Mapping of directions (NESW) to wall configurations in binary."
 
-    north: bool = True
-    east: bool = True
-    south: bool = True
-    west: bool = True
-
-    def get_walls(self) -> int:
-        """Return wall configuration as a numerical value."""
-        value = 0
-
-        if self.north:
-            value |= 0b0001
-        if self.east:
-            value |= 0b0010
-        if self.south:
-            value |= 0b0100
-        if self.west:
-            value |= 0b1000
-        return value
+    def __init__(self) -> None:
+        self.walls = 0b1111
 
     def open_wall(self, direction: str) -> None:
-        """Open the wall in the given direction.
-
-        Args:
-            direction: One of 'N', 'E', 'S', 'W'.
-
-        Raises:
-            ValueError: If direction is invalid.
-        """
-        direction = direction.upper()
-
-        if direction == "N":
-            self.north = False
-        elif direction == "E":
-            self.east = False
-        elif direction == "S":
-            self.south = False
-        elif direction == "W":
-            self.west = False
-        else:
-            raise ValueError(f"Invalid direction: {direction}")
+        "Open a wall in a direction, using one of N, E, S or W."
+        self.walls &= 0b1111 - self.WALLMAP[direction.upper()]
 
     def has_wall(self, direction: str) -> bool:
-        """Check whether a wall exists in a direction.
-
-        Args:
-            direction: One of 'N', 'E', 'S', 'W'.
-
-        Returns:
-            True if wall is closed, False if open.
-
-        Raises:
-            ValueError: If direction is invalid.
-        """
-        direction = direction.upper()
-
-        if direction == "N":
-            return self.north
-        if direction == "E":
-            return self.east
-        if direction == "S":
-            return self.south
-        if direction == "W":
-            return self.west
-        raise ValueError(f"Invalid direction: {direction}")
+        "Check if a wall exists in a direction, using one of N, E, S or W."
+        return bool(self.walls & self.WALLMAP[direction.upper()])

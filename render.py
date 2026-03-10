@@ -1,4 +1,5 @@
 import os
+import random
 from typing import Any
 from mlx import Mlx
 
@@ -20,8 +21,8 @@ class Context:
         """Dictionary of all loaded images. `gfx` means graphics.
         Images are of type `Any` and the key for each image is
         its filepath inside the assets folder."""
-        self.win: list[Any] = []
-        "All our created windows."
+        self.win: Any = None
+        "Window to render in."
         self.maze = maze
         "Maze data."
         self.scale = 64
@@ -65,37 +66,31 @@ def render(maze: Maze, path: list[str]) -> bool:
     w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]  # Discard first element (Any).
     if maze.width * ctx.scale > w or maze.height * ctx.scale > h:
         ctx.scale = 32
+    # After setting the scale, we use `w` and `h` to store the window size.
+    w, h = ctx.scale * ctx.maze.width, max(ctx.scale * ctx.maze.height, 512)
 
     # Colors ------------------------------------------------------------------
     colors = ["red", "green", "blue", "cyan", "pink", "yellow"]
-    color_i = 0  # Index of the currently used color.
+    color_i = random.randint(0, 5)  # Index of the currently used color.
 
     # Render helpers ----------------------------------------------------------
-    def create_windows() -> None:
-        """Create two windows and render the buttons inside."""
-        ctx.win.append(
-            ctx.m.mlx_new_window(
-                ctx.p,
-                ctx.scale * ctx.maze.width,
-                ctx.scale * ctx.maze.height,
-                "A-Maze-ing"))
-        ctx.win.append(
-            ctx.m.mlx_new_window(
-                ctx.p,
-                256,
-                512,
-                "Controls"))
-        ctx.m.mlx_clear_window(ctx.p, ctx.win[0])
-        ctx.m.mlx_clear_window(ctx.p, ctx.win[1])
+    def create_window() -> None:
+        """Create a window and render the buttons inside."""
+        ctx.win = ctx.m.mlx_new_window(
+                    ctx.p,
+                    w + 256,
+                    h,
+                    "A-Maze-ing")
+        ctx.m.mlx_clear_window(ctx.p, ctx.win)
 
         ctx.m.mlx_put_image_to_window(
-            ctx.p, ctx.win[1], ctx.gfx["button/regenerate"], 0, 0)
+            ctx.p, ctx.win, ctx.gfx["button/regenerate"], w, 0)
         ctx.m.mlx_put_image_to_window(
-            ctx.p, ctx.win[1], ctx.gfx["button/color"], 0, 128)
+            ctx.p, ctx.win, ctx.gfx["button/color"], w, 128)
         ctx.m.mlx_put_image_to_window(
-            ctx.p, ctx.win[1], ctx.gfx["button/path"], 0, 256)
+            ctx.p, ctx.win, ctx.gfx["button/path"], w, 256)
         ctx.m.mlx_put_image_to_window(
-            ctx.p, ctx.win[1], ctx.gfx["button/exit"], 0, 384)
+            ctx.p, ctx.win, ctx.gfx["button/exit"], w, 384)
         ctx.m.mlx_do_sync(ctx.p)
 
     def render_maze_cells(subdir: str) -> None:
@@ -103,33 +98,33 @@ def render(maze: Maze, path: list[str]) -> bool:
         and the entry and exit."""
         ctx.m.mlx_do_sync(ctx.p)  # Reduces chance of corruption.
         for y, row in enumerate(maze.grid):
+            ctx.m.mlx_do_sync(ctx.p)  # Reduces chance of corruption.
             for x, cell in enumerate(row):
                 # Draw a colored background for the cell.
                 ctx.m.mlx_put_image_to_window(
-                    ctx.p, ctx.win[0],
+                    ctx.p, ctx.win,
                     ctx.gfx[f"{subdir}color/{colors[color_i]}"],
                     x * ctx.scale,
                     y * ctx.scale)
 
                 # Draw the cell itself.
-                walls = cell.get_walls()
                 ctx.m.mlx_put_image_to_window(
                     ctx.p,
-                    ctx.win[0],
-                    ctx.gfx[f"{subdir}{walls:04b}"],
+                    ctx.win,
+                    ctx.gfx[f"{subdir}{cell.walls:04b}"],
                     x * ctx.scale,
                     y * ctx.scale)
 
         x, y = maze.entry[0] * ctx.scale, maze.entry[1] * ctx.scale
         ctx.m.mlx_put_image_to_window(
             ctx.p,
-            ctx.win[0],
+            ctx.win,
             ctx.gfx[f"{subdir}obj/entry"], x, y)
 
         x, y = maze.exit[0] * ctx.scale, maze.exit[1] * ctx.scale
         ctx.m.mlx_put_image_to_window(
             ctx.p,
-            ctx.win[0],
+            ctx.win,
             ctx.gfx[f"{subdir}obj/exit"], x, y)
 
     def render_path(subdir: str) -> None:
@@ -151,7 +146,7 @@ def render(maze: Maze, path: list[str]) -> bool:
                     raise ValueError("path contains invalid character")
             ctx.m.mlx_put_image_to_window(
                 ctx.p,
-                ctx.win[0],
+                ctx.win,
                 ctx.gfx[f"{subdir}path"],
                 x * ctx.scale,
                 y * ctx.scale)
@@ -160,10 +155,12 @@ def render(maze: Maze, path: list[str]) -> bool:
     # Hooks -------------------------------------------------------------------
     def on_mouse(button: int, x: int, y: int, params: Any) -> None:
         nonlocal regenerate, color_i, path_visible
+        if x < ctx.scale * ctx.maze.width:  # Check if inside sidebar.
+            return
+
         if y < 127:  # Regenerate button.
             regenerate = True
-            ctx.m.mlx_destroy_window(ctx.p, ctx.win[0])
-            ctx.m.mlx_destroy_window(ctx.p, ctx.win[1])
+            ctx.m.mlx_destroy_window(ctx.p, ctx.win)
             ctx.m.mlx_loop_exit(ctx.p)
 
         elif 127 < y < 255:  # Color button.
@@ -182,7 +179,7 @@ def render(maze: Maze, path: list[str]) -> bool:
                 path_visible = True
             ctx.m.mlx_do_sync(ctx.p)
 
-        elif y > 384:  # Exit button.
+        elif 384 < y < 512:  # Exit button.
             ctx.m.mlx_loop_exit(ctx.p)
 
     def on_key(keynum: int, params: Any) -> None:
@@ -193,15 +190,14 @@ def render(maze: Maze, path: list[str]) -> bool:
         ctx.m.mlx_loop_exit(ctx.p)
 
     # Environment and initial render ------------------------------------------
-    create_windows()
+    create_window()
     render_maze_cells(f"tile{ctx.scale}/")
     ctx.m.mlx_do_sync(ctx.p)
 
     # Setting up hooks --------------------------------------------------------
-    ctx.m.mlx_mouse_hook(ctx.win[1], on_mouse, None)
-    ctx.m.mlx_key_hook(ctx.win[0], on_key, None)
-    ctx.m.mlx_key_hook(ctx.win[1], on_key, None)
-    ctx.m.mlx_hook(ctx.win[0], 33, 0, on_close, None)
+    ctx.m.mlx_mouse_hook(ctx.win, on_mouse, None)
+    ctx.m.mlx_key_hook(ctx.win, on_key, None)
+    ctx.m.mlx_hook(ctx.win, 33, 0, on_close, None)
 
     ctx.m.mlx_loop(ctx.p)
     return regenerate
