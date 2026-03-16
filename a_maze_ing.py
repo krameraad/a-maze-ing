@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
 
+
 from mazegen.maze import Maze, MazeError
 from config import parse_config, ConfigError
 from solver import solve_maze
@@ -33,7 +34,7 @@ while regenerate:
     # Generate maze -----------------------------------------------------------
     try:
         maze = Maze(*config[:4], *config[5:])
-    except MazeError as e:
+    except (MazeError, ValueError) as e:
         print(f"Maze generation error: {e}")
         sys.exit(1)
 
@@ -58,3 +59,5 @@ while regenerate:
     except (ValueError, RenderError) as e:
         print("Error rendering maze:", e)
         sys.exit(1)
+
+    

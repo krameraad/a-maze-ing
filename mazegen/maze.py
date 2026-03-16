@@ -29,23 +29,21 @@ class Maze:
 
         # Validate and correct arguments.
         if self.width <= 1:
-            print("Maze width invalid, must be more than 1", file=sys.stderr)
-            self.width = 25
+            raise ValueError("Maze width invalid, must be more than 1")
         if self.height <= 1:
-            print("Maze height invalid, must be more than 1", file=sys.stderr)
-            self.height = 25
+            raise ValueError("Maze height invalid, must be more than 1")
         x, y = self.entry
         if not 0 <= x < width or not 0 <= y < height:
-            print("Entry coordinates are out of bounds.", file=sys.stderr)
-            self.entry = (0, 0)
+            raise ValueError("Entry coordinates are out of bounds.")
+            # self.entry = (0, 0)
         x, y = self.exit
         if not 0 <= x < width or not 0 <= y < height:
-            print("Exit coordinates are out of bounds.", file=sys.stderr)
-            self.exit = (self.width - 1, self.height - 1)
+            raise ValueError("Exit coordinates are out of bounds.")
+            # self.exit = (self.width - 1, self.height - 1)
         if self.entry == self.exit:
-            print("Entry and exit share coordinates.", file=sys.stderr)
-            self.entry = (0, 0)
-            self.exit = (self.width - 1, self.height - 1)
+            raise ValueError("Entry and exit share coordinates.")
+            # self.entry = (0, 0)
+            # self.exit = (self.width - 1, self.height - 1)
 
         # Create grid of cells.
         self.grid: list[list[Cell]] = []
