@@ -1,47 +1,45 @@
 from pathlib import Path
-from typing import Tuple, Dict
 
 
-Config = tuple[int,
-               int,
-               tuple[int, int],
-               tuple[int, int],
-               str,
-               bool,
-               int]
+Config = tuple[
+    int,
+    int,
+    tuple[int, int],
+    tuple[int, int],
+    str,
+    bool,
+    int]
 
 
 class ConfigError(Exception):
     pass
 
 
-def parse_bool(value: str) -> bool:
+def parse_bool(value: str, key: str) -> bool:
     """Parse boolean value from string."""
     if value == "True":
         return True
     if value == "False":
         return False
+    raise ConfigError(f"{key} must be 'True' or 'False' (got {value})")
 
-    raise ConfigError("PERFECT must be True or False.")
 
-
-def parse_coordinates(value: str, key: str) -> Tuple[int, int]:
+def parse_coordinates(value: str, key: str) -> tuple[int, int]:
     """Parse coordinate string 'x,y'."""
     try:
         x_str, y_str = value.split(",", maxsplit=1)
         return int(x_str), int(y_str)
-    except ValueError as error:
+    except ValueError as e:
         raise ConfigError(
-            f"{key} must be in format x,y with integers."
-        ) from error
+            f"{key} must be in format x,y with integers (got {value})") from e
 
 
 def parse_int(value: str, key: str) -> int:
     """Convert a string to int safely."""
     try:
         return int(value)
-    except ValueError as error:
-        raise ConfigError(f"{key} must be an integer.") from error
+    except ValueError as e:
+        raise ConfigError(f"{key} must be an integer (got {value})") from e
 
 
 def parse_config(file_path: Path) -> Config:
@@ -56,15 +54,11 @@ def parse_config(file_path: Path) -> Config:
     Raises:
         ConfigError: If the configuration file is invalid.
     """
-
-    if not file_path.exists() or not file_path.is_file():
-        raise ConfigError(f"Config file not found: {file_path}")
-
-    data: Dict[str, str] = {}
+    data: dict[str, str] = {}
 
     try:
         with file_path.open("r", encoding="utf-8") as file:
-            for line_number, raw_line in enumerate(file, start=1):
+            for i, raw_line in enumerate(file, start=1):
                 line = raw_line.strip()
 
                 # Ignore empty lines and comments
@@ -72,18 +66,12 @@ def parse_config(file_path: Path) -> Config:
                     continue
 
                 if "=" not in line:
-                    raise ConfigError(
-                        f"Invalid line format at line {line_number}."
-                    )
+                    raise ConfigError(f"Invalid line format at line {i}.")
 
                 key, value = line.split("=", maxsplit=1)
-                key = key.strip()
-                value = value.strip()
-
-                data[key] = value
-    except ConfigError as error:
-        raise ConfigError(f"Error reading configuration file: {error}") \
-            from error
+                data[key.strip()] = value.strip()
+    except FileNotFoundError as e:
+        raise ConfigError(f"Couldn't find file '{file_path}'") from e
 
     # Validate required keys
     required_keys = {
@@ -94,7 +82,6 @@ def parse_config(file_path: Path) -> Config:
         "OUTPUT_FILE",
         "PERFECT",
     }
-
     missing = required_keys - data.keys()
     if missing:
         raise ConfigError(f"Missing required keys: {', '.join(missing)}")
@@ -103,19 +90,16 @@ def parse_config(file_path: Path) -> Config:
     width = parse_int(data["WIDTH"], "WIDTH")
     height = parse_int(data["HEIGHT"], "HEIGHT")
     entry = parse_coordinates(data["ENTRY"], "ENTRY")
-    exit_ = parse_coordinates(data["EXIT"], "EXIT")
-    perfect = parse_bool(data["PERFECT"])
+    exit = parse_coordinates(data["EXIT"], "EXIT")
+    perfect = parse_bool(data["PERFECT"], "PERFECT")
     output_file = data["OUTPUT_FILE"]
-
-    seed = 0
-    if "SEED" in data:
-        seed = parse_int(data["SEED"], "SEED")
+    seed = parse_int(data.get("SEED", "0"), "SEED")
 
     return (
         width,
         height,
         entry,
-        exit_,
+        exit,
         output_file,
         perfect,
         seed,

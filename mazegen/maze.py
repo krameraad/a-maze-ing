@@ -35,15 +35,11 @@ class Maze:
         x, y = self.entry
         if not 0 <= x < width or not 0 <= y < height:
             raise ValueError("Entry coordinates are out of bounds.")
-            # self.entry = (0, 0)
         x, y = self.exit
         if not 0 <= x < width or not 0 <= y < height:
             raise ValueError("Exit coordinates are out of bounds.")
-            # self.exit = (self.width - 1, self.height - 1)
         if self.entry == self.exit:
             raise ValueError("Entry and exit share coordinates.")
-            # self.entry = (0, 0)
-            # self.exit = (self.width - 1, self.height - 1)
 
         # Create grid of cells.
         self.grid: list[list[Cell]] = []
@@ -171,7 +167,7 @@ class Maze:
 
         MIN_WIDTH, MIN_HEIGHT = 9, 7
         if self.width < MIN_WIDTH or self.height < MIN_HEIGHT:
-            print(f"Maze too small for '42' logo"
+            print(f"Maze too small for '42' logo "
                   f"(minimum {MIN_WIDTH}x{MIN_HEIGHT}, "
                   f"got {self.width}x{self.height}).",
                   file=sys.stderr)
