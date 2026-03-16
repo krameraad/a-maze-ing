@@ -17,10 +17,6 @@ class Context:
         "The MLX class itself."
         self.p = self.m.mlx_init()
         "Pointer to the MLX connection."
-        self.gfx: dict[str, Any] = {}
-        """Dictionary of all loaded images. `gfx` means graphics.
-        Images are of type `Any` and the key for each image is
-        its filepath inside the assets folder."""
 
 
 def render(maze: Maze, path: list[str]) -> bool:
@@ -38,18 +34,20 @@ def render(maze: Maze, path: list[str]) -> bool:
         ValueError: If the path contains invalid characters."""
 
     # Render helpers ----------------------------------------------------------
-    def load_assets(dir: str) -> None:
+    def load_assets(dir: str) -> dict[str, Any]:
         """Load all assets from a directory, including its subdirectories."""
+        result = {}
         for x in os.listdir(dir):
             file = f"{dir}/{x}"
             if os.path.isdir(file):
-                load_assets(file)
+                result.update(load_assets(file))
             else:
                 name = file.removeprefix("assets/").removesuffix(".png")
-                ctx.gfx.update(
+                result.update(
                     {name: ctx.m.mlx_png_file_to_image(ctx.p, file)[0]})
-                if not ctx.gfx[name]:
+                if not result[name]:
                     raise RenderError(f"failed loading PNG from {file}")
+        return result
 
     def get_scale() -> int:
         w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]
@@ -64,13 +62,13 @@ def render(maze: Maze, path: list[str]) -> bool:
         ctx.m.mlx_clear_window(ctx.p, window)
 
         ctx.m.mlx_put_image_to_window(
-            ctx.p, window, ctx.gfx["button/regenerate"], width, 0)
+            ctx.p, window, gfx["button/regenerate"], width, 0)
         ctx.m.mlx_put_image_to_window(
-            ctx.p, window, ctx.gfx["button/color"], width, 128)
+            ctx.p, window, gfx["button/color"], width, 128)
         ctx.m.mlx_put_image_to_window(
-            ctx.p, window, ctx.gfx["button/path"], width, 256)
+            ctx.p, window, gfx["button/path"], width, 256)
         ctx.m.mlx_put_image_to_window(
-            ctx.p, window, ctx.gfx["button/exit"], width, 384)
+            ctx.p, window, gfx["button/exit"], width, 384)
         ctx.m.mlx_do_sync(ctx.p)
         return window
 
@@ -84,7 +82,7 @@ def render(maze: Maze, path: list[str]) -> bool:
                 # Draw a colored background for the cell.
                 ctx.m.mlx_put_image_to_window(
                     ctx.p, win,
-                    ctx.gfx[f"{subdir}color/{colors[color_i]}"],
+                    gfx[f"{subdir}color/{colors[color_i]}"],
                     x * scale,
                     y * scale)
 
@@ -92,7 +90,7 @@ def render(maze: Maze, path: list[str]) -> bool:
                 ctx.m.mlx_put_image_to_window(
                     ctx.p,
                     win,
-                    ctx.gfx[f"{subdir}{cell.walls:04b}"],
+                    gfx[f"{subdir}{cell.walls:04b}"],
                     x * scale,
                     y * scale)
 
@@ -100,13 +98,13 @@ def render(maze: Maze, path: list[str]) -> bool:
         ctx.m.mlx_put_image_to_window(
             ctx.p,
             win,
-            ctx.gfx[f"{subdir}obj/entry"], x, y)
+            gfx[f"{subdir}obj/entry"], x, y)
 
         x, y = maze.exit[0] * scale, maze.exit[1] * scale
         ctx.m.mlx_put_image_to_window(
             ctx.p,
             win,
-            ctx.gfx[f"{subdir}obj/exit"], x, y)
+            gfx[f"{subdir}obj/exit"], x, y)
 
     def render_path(subdir: str) -> None:
         """Render the path to the exit."""
@@ -128,7 +126,7 @@ def render(maze: Maze, path: list[str]) -> bool:
             ctx.m.mlx_put_image_to_window(
                 ctx.p,
                 win,
-                ctx.gfx[f"{subdir}path"],
+                gfx[f"{subdir}path"],
                 x * scale,
                 y * scale)
             ctx.m.mlx_do_sync(ctx.p)
@@ -172,7 +170,11 @@ def render(maze: Maze, path: list[str]) -> bool:
 
     # Basic setup -------------------------------------------------------------
     ctx = Context(maze)
-    load_assets("assets")
+    gfx = load_assets("assets")
+    # Dictionary of all loaded images. `gfx` means graphics.
+    # Images are of type `Any` and the key for each image is
+    # its filepath inside the assets folder.
+
     scale = get_scale()  # Size of a tile (could be 32 or 64 pixels).
     win = create_window(scale * maze.width, max(scale * maze.height, 512))
 
