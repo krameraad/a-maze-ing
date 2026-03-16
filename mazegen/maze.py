@@ -162,7 +162,7 @@ class Maze:
 
     def _logo_cells(self) -> set[tuple[int, int]]:
         """Return cells that form the '42' logo in the center of the maze."""
-        cells = set()
+        cells: set[tuple[int, int]] = set()
         cx = self.width // 2 - 3
         cy = self.height // 2 - 2
 
