@@ -29,20 +29,6 @@ class Context:
         "Size of a tile (could be 32 or 64 pixels)."
 
 
-def load_assets(ctx: Context, dir: str) -> None:
-    """Load all assets from a directory, including its subdirectories."""
-    for x in os.listdir(dir):
-        file = f"{dir}/{x}"
-        if os.path.isdir(file):
-            load_assets(ctx, file)
-        else:
-            name = file.removeprefix("assets/").removesuffix(".png")
-            ctx.gfx.update(
-                {name: ctx.m.mlx_png_file_to_image(ctx.p, file)[0]})
-            if not ctx.gfx[name]:
-                raise RenderError(f"failed loading PNG from {file}")
-
-
 def render(maze: Maze, path: list[str]) -> bool:
     """Render the maze using MLX.
 
@@ -56,24 +42,21 @@ def render(maze: Maze, path: list[str]) -> bool:
     Raises:
         RenderError: When the assets fail to load.
         ValueError: If the path contains invalid characters."""
-    ctx = Context(maze)
-    load_assets(ctx, "assets")
-
-    regenerate = False  # Whether to regenerate the maze after ending the loop.
-    path_visible = False
-
-    # Setting correct scale ---------------------------------------------------
-    w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]  # Discard first element (Any).
-    if maze.width * ctx.scale > w or maze.height * ctx.scale > h:
-        ctx.scale = 32
-    # After setting the scale, we use `w` and `h` to store the window size.
-    w, h = ctx.scale * ctx.maze.width, max(ctx.scale * ctx.maze.height, 512)
-
-    # Colors ------------------------------------------------------------------
-    colors = ["red", "green", "blue", "cyan", "pink", "yellow"]
-    color_i = random.randint(0, 5)  # Index of the currently used color.
 
     # Render helpers ----------------------------------------------------------
+    def load_assets(dir: str) -> None:
+        """Load all assets from a directory, including its subdirectories."""
+        for x in os.listdir(dir):
+            file = f"{dir}/{x}"
+            if os.path.isdir(file):
+                load_assets(file)
+            else:
+                name = file.removeprefix("assets/").removesuffix(".png")
+                ctx.gfx.update(
+                    {name: ctx.m.mlx_png_file_to_image(ctx.p, file)[0]})
+                if not ctx.gfx[name]:
+                    raise RenderError(f"failed loading PNG from {file}")
+
     def create_window() -> None:
         """Create a window and render the buttons inside."""
         ctx.win = ctx.m.mlx_new_window(
@@ -188,6 +171,24 @@ def render(maze: Maze, path: list[str]) -> bool:
 
     def on_close(dummy: Any) -> None:
         ctx.m.mlx_loop_exit(ctx.p)
+
+    # Basic setup -------------------------------------------------------------
+    ctx = Context(maze)
+    load_assets("assets")
+
+    regenerate = False  # Whether to regenerate the maze after ending the loop.
+    path_visible = False
+
+    # Setting correct scale ---------------------------------------------------
+    w, h = ctx.m.mlx_get_screen_size(ctx.p)[1:]  # Discard first element (Any).
+    if maze.width * ctx.scale > w or maze.height * ctx.scale > h:
+        ctx.scale = 32
+    # After setting the scale, we use `w` and `h` to store the window size.
+    w, h = ctx.scale * ctx.maze.width, max(ctx.scale * ctx.maze.height, 512)
+
+    # Colors ------------------------------------------------------------------
+    colors = ["red", "green", "blue", "cyan", "pink", "yellow"]
+    color_i = random.randint(0, 5)  # Index of the currently used color.
 
     # Environment and initial render ------------------------------------------
     create_window()

@@ -2,9 +2,7 @@
 __pycache__
 .mypy_cache
 maze.txt
-todo.txt
-mlx
 dist
 mazegen.egg-info
-mlx*
-test
+mlx-2.2-py3-none-any.whl
+output_validator.py
