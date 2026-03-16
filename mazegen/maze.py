@@ -25,7 +25,6 @@ class Maze:
         self.exit = exit
         self.perfect = perfect
         self.seed = seed
-        self.logo = self._logo_cells()
 
         # Validate and correct arguments.
         if self.width <= 1:
@@ -41,6 +40,7 @@ class Maze:
         if self.entry == self.exit:
             raise ValueError("Entry and exit share coordinates.")
 
+        self.logo = self._logo_cells()
         # Create grid of cells.
         self.grid: list[list[Cell]] = []
         for y in range(self.height):
@@ -162,8 +162,9 @@ class Maze:
 
     def _logo_cells(self) -> set[tuple[int, int]]:
         """Return cells that form the '42' logo in the center of the maze."""
-        cx = self.width // 2
-        cy = self.height // 2
+        cells = set()
+        cx = self.width // 2 - 3
+        cy = self.height // 2 - 2
 
         MIN_WIDTH, MIN_HEIGHT = 9, 7
         if self.width < MIN_WIDTH or self.height < MIN_HEIGHT:
@@ -171,16 +172,15 @@ class Maze:
                   f"(minimum {MIN_WIDTH}x{MIN_HEIGHT}, "
                   f"got {self.width}x{self.height}).",
                   file=sys.stderr)
-            return set()
+            return cells
 
         # Pixel art pattern for "42" (relative offsets from center-left)
         # Each tuple is (col_offset, row_offset) from anchor point
-        four = [
+        fourtytwo = [
             (0, 0), (0, 1), (0, 2),          # left vertical
                     (1, 2), (2, 2),          # horizontal bar
-                    (2, 0), (2, 1), (2, 3), (2, 4)  # right vertical
-        ]
-        two = [
+                    (2, 0), (2, 1), (2, 3), (2, 4),  # right vertical
+
             (4, 0), (5, 0), (6, 0),          # top bar
                             (6, 1),          # top-right
             (4, 2), (5, 2), (6, 2),          # middle bar
@@ -188,14 +188,9 @@ class Maze:
             (4, 4), (5, 4), (6, 4),          # bottom bar
         ]
 
-        anchor_col = cx - 3  # shift left to center the whole "42"
-        anchor_row = cy - 2  # shift up to center vertically
-
-        cells = set()
-        for dc, dr in four + two:
-            col = anchor_col + dc
-            row = anchor_row + dr
+        for dc, dr in fourtytwo:
+            col = cx + dc
+            row = cy + dr
             if 0 <= col < self.width and 0 <= row < self.height:
                 cells.add((col, row))
-
         return cells
