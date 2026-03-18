@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 
 
-from mazegen.maze import Maze, MazeError
+from mazegen.maze import Maze
 from config import parse_config, ConfigError
 from solver import solve_maze
 from writer import write_maze
@@ -26,7 +26,7 @@ except ConfigError as e:
 # Generate maze ---------------------------------------------------------------
 try:
     maze = Maze(*config[:4], *config[5:])
-except (MazeError, ValueError) as e:
+except ValueError as e:
     print(f"Maze generation error: {e}")
     sys.exit(1)
 

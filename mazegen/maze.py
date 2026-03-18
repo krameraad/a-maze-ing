@@ -4,10 +4,6 @@ import random
 from mazegen.cell import Cell
 
 
-class MazeError(Exception):
-    pass
-
-
 class Maze:
     """Maze structure and generation logic."""
     def __init__(
@@ -125,11 +121,8 @@ class Maze:
             (+1, 0): 0b0111}
 
         x, y = current[0] - neighbor[0], current[1] - neighbor[1]
-
-        cell = self.grid[current[1]][current[0]]
-        cell.walls &= DIRECTIONS[(x, y)]
-        cell = self.grid[neighbor[1]][neighbor[0]]
-        cell.walls &= DIRECTIONS[(-x, -y)]
+        self.grid[current[1]][current[0]].walls &= DIRECTIONS[(x, y)]
+        self.grid[neighbor[1]][neighbor[0]].walls &= DIRECTIONS[(-x, -y)]
 
     def _open_dead_ends(self) -> None:
         """Make all eligible dead-ends into straight corridors."""
