@@ -1,7 +1,15 @@
 import sys
 import random
+from enum import IntEnum
 
 from mazegen.cell import Cell
+
+
+class Dir(IntEnum):
+    N = 0b1110
+    E = 0b1101
+    S = 0b1011
+    W = 0b0111
 
 
 class Maze:
@@ -115,10 +123,10 @@ class Maze:
     ) -> None:
         """Remove walls between two adjacent cells."""
         DIRECTIONS = {
-            (0, +1): 0b1110,
-            (-1, 0): 0b1101,
-            (0, -1): 0b1011,
-            (+1, 0): 0b0111}
+            (0, +1): Dir.N,
+            (-1, 0): Dir.E,
+            (0, -1): Dir.S,
+            (+1, 0): Dir.W}
 
         x, y = current[0] - neighbor[0], current[1] - neighbor[1]
         self.grid[current[1]][current[0]].walls &= DIRECTIONS[(x, y)]
@@ -128,17 +136,17 @@ class Maze:
         """Make all eligible dead-ends into straight corridors."""
         # Which dead-end orientation corresponds to which direction.
         DIRECTIONS = {
-            0b1110: (0, +1),  # Opening is north, target is south
-            0b1101: (-1, 0),  # Opening is east, target is west
-            0b1011: (0, -1),  # Opening is south, target is north
-            0b0111: (+1, 0)}  # Opening is west, target is east
+            Dir.N: (0, +1),  # Opening is north, target is south
+            Dir.E: (-1, 0),  # Opening is east, target is west
+            Dir.S: (0, -1),  # Opening is south, target is north
+            Dir.W: (+1, 0)}  # Opening is west, target is east
 
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
                 # Check that we're dealing with any of the dead-end variants.
                 if cell.walls not in DIRECTIONS:
                     continue
-                direction = DIRECTIONS[cell.walls]
+                direction = DIRECTIONS[Dir(cell.walls)]
                 nx, ny = (direction[0] + x, direction[1] + y)  # Target cell.
                 # Validate that the target is within the maze bounds,
                 # and that the target is not part of the logo.
