@@ -4,3 +4,4 @@ ENTRY=0,0
 EXIT=24,24
 OUTPUT_FILE=maze.txt
 PERFECT=False
+PATTERN=smile.txt

@@ -1,14 +1,5 @@
 from pathlib import Path
-
-
-Config = tuple[
-    int,
-    int,
-    tuple[int, int],
-    tuple[int, int],
-    str,
-    bool,
-    int]
+from typing import Any
 
 
 class ConfigError(Exception):
@@ -42,19 +33,20 @@ def parse_int(value: str, key: str) -> int:
         raise ConfigError(f"{key} must be an integer (got {value})") from e
 
 
-def parse_config(file_path: Path) -> Config:
+def parse_config(file_path: Path) -> dict[str, Any]:
     """Parse and validate a maze configuration file.
 
     Args:
         file_path: Path to the configuration file.
 
     Returns:
-        A validated Config object.
+        Dictionary containing all keyword arguments for a maze.
 
     Raises:
         ConfigError: If the configuration file is invalid.
     """
     data: dict[str, str] = {}
+    result: dict[str, Any] = {}
 
     try:
         with file_path.open("r", encoding="utf-8") as file:
@@ -87,20 +79,20 @@ def parse_config(file_path: Path) -> Config:
         raise ConfigError(f"Missing required keys: {', '.join(missing)}")
 
     # Convert types safely
-    width = parse_int(data["WIDTH"], "WIDTH")
-    height = parse_int(data["HEIGHT"], "HEIGHT")
-    entry = parse_coordinates(data["ENTRY"], "ENTRY")
-    exit = parse_coordinates(data["EXIT"], "EXIT")
-    perfect = parse_bool(data["PERFECT"], "PERFECT")
-    output_file = data["OUTPUT_FILE"]
-    seed = parse_int(data.get("SEED", "0"), "SEED")
+    result["width"] = parse_int(data["WIDTH"], "WIDTH")
+    result["height"] = parse_int(data["HEIGHT"], "HEIGHT")
+    result["entry"] = parse_coordinates(data["ENTRY"], "ENTRY")
+    result["exit"] = parse_coordinates(data["EXIT"], "EXIT")
+    result["perfect"] = parse_bool(data["PERFECT"], "PERFECT")
+    result["seed"] = parse_int(data.get("SEED", "0"), "SEED")
+    result["output_file"] = data["OUTPUT_FILE"]
 
-    return (
-        width,
-        height,
-        entry,
-        exit,
-        output_file,
-        perfect,
-        seed,
-    )
+    pattern_file = data.get("PATTERN")
+    if not pattern_file:
+        return result
+    try:
+        with Path("patterns/" + pattern_file).open("r") as file:
+            result["pattern"] = [x for x in file.read().splitlines()]
+    except FileNotFoundError as e:
+        raise ConfigError(f"Couldn't find file '{pattern_file}'") from e
+    return result

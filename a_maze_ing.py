@@ -19,13 +19,14 @@ if len(sys.argv) != 2:
 # Parse configuration ---------------------------------------------------------
 try:
     config = parse_config(Path(sys.argv[1]))
+    output_file = Path(config.pop("output_file"))
 except ConfigError as e:
     print(f"Config error: {e}")
     sys.exit(1)
 
 # Generate maze ---------------------------------------------------------------
 try:
-    maze = Maze(*config[:4], *config[5:])
+    maze = Maze(**config)
 except ValueError as e:
     print(f"Maze generation error: {e}")
     sys.exit(1)
@@ -39,9 +40,8 @@ except Exception as e:
 
 # Write maze to output file ---------------------------------------------------
 try:
-    output_path = Path(config[4])
-    write_maze(maze, path, output_path)
-    print(f"Maze successfully written to {output_path}")
+    write_maze(maze, path, output_file)
+    print(f"Maze successfully written to {output_file}")
 except Exception as e:
     print(f"Error writing maze: {e}")
     sys.exit(1)
