@@ -92,7 +92,7 @@ def render(maze: Maze, path: list[str]) -> None:
                 m.mlx_put_image_to_window(
                     p,
                     win,
-                    gfx[f"tile{scale}/{cell.walls:04b}"],
+                    gfx[f"tile{scale}/{cell:04b}"],
                     x * scale,
                     y * scale)
 

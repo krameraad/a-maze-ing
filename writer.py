@@ -15,7 +15,7 @@ def write_maze(
         out = ""
         for row in maze.grid:
             for cell in row:
-                out += f"{cell.walls:X}"
+                out += f"{cell:X}"
             out += "\n"
         f.write(out + "\n")
 

@@ -34,7 +34,7 @@ def solve_maze(maze: Maze) -> List[str]:
             y_is_valid = ny >= 0 and ny < maze.height
             if x_is_valid and y_is_valid:
                 # Only move if there is NO wall
-                if not cell.walls & (0b1111 - Dir[direction]):
+                if not cell & (0b1111 - Dir[direction]):
                     if (nx, ny) not in came_from:
                         queue.append((nx, ny))
                         came_from[(nx, ny)] = (current, direction)

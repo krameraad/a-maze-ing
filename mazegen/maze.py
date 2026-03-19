@@ -3,8 +3,6 @@ import random
 from enum import IntEnum
 from dataclasses import dataclass
 
-from mazegen.cell import Cell
-
 
 class Dir(IntEnum):
     N = 0b1110
@@ -44,11 +42,11 @@ class Maze:
             raise ValueError("Entry or exit overlap with the 42 pattern.")
 
         # Create grid of cells.
-        self.grid: list[list[Cell]] = []
+        self.grid: list[list[int]] = []
         for y in range(self.height):
             current_row = []
             for x in range(self.width):
-                current_row.append(Cell())
+                current_row.append(0b1111)
             self.grid.append(current_row)
 
         self.generate()
@@ -59,9 +57,9 @@ class Maze:
             random.seed(self.seed)
 
         # Close all cells.
-        for row in self.grid:
-            for cell in row:
-                cell.walls = 0b1111
+        for y in range(self.height):
+            for x in range(self.width):
+                self.grid[y][x] = 0b1111
 
         visited = {(0, 0)}
         stack = [(0, 0)]
@@ -115,8 +113,8 @@ class Maze:
             (+1, 0): Dir.W}
 
         x, y = current[0] - neighbor[0], current[1] - neighbor[1]
-        self.grid[current[1]][current[0]].walls &= DIRECTIONS[(x, y)]
-        self.grid[neighbor[1]][neighbor[0]].walls &= DIRECTIONS[(-x, -y)]
+        self.grid[current[1]][current[0]] &= DIRECTIONS[(x, y)]
+        self.grid[neighbor[1]][neighbor[0]] &= DIRECTIONS[(-x, -y)]
 
     def _open_dead_ends(self) -> None:
         """Make all eligible dead-ends into straight corridors."""
@@ -127,12 +125,12 @@ class Maze:
             Dir.S: (0, -1),  # Opening is south, target is north
             Dir.W: (+1, 0)}  # Opening is west, target is east
 
-        for y, row in enumerate(self.grid):
-            for x, cell in enumerate(row):
+        for y in range(self.height):
+            for x in range(self.width):
                 # Check that we're dealing with any of the dead-end variants.
-                if cell.walls not in DIRECTIONS:
+                if self.grid[y][x] not in DIRECTIONS:
                     continue
-                direction = DIRECTIONS[Dir(cell.walls)]
+                direction = DIRECTIONS[Dir(self.grid[y][x])]
                 nx, ny = (direction[0] + x, direction[1] + y)  # Target cell.
                 # Validate that the target is within the maze bounds,
                 # and that the target is not part of the logo.
